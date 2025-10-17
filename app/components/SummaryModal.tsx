@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Calendar, User, Tag, AlertCircle, Info } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import DateDisplay from './DateDisplay';
 
 interface SummaryModalProps {
@@ -83,56 +84,60 @@ export default function SummaryModal({ isOpen, onClose, issue }: SummaryModalPro
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Overlay */}
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="fixed inset-0 bg-black/60 backdrop-blur-md transition-opacity"
         onClick={onClose}
       />
       
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl">
+        <div className="relative w-full max-w-5xl bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                <AlertCircle className="w-5 h-5 text-white" />
+          <div className="flex items-center justify-between p-6 border-b border-gray-200/50 bg-gradient-to-r from-gray-50 to-blue-50">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <AlertCircle className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">{issue.key}</h2>
-                <p className="text-sm text-gray-500">{issue.fields.project?.name || 'Projet'}</p>
+                <h2 className="text-2xl font-bold text-gray-900">{issue.key}</h2>
+                <p className="text-sm text-gray-600">{issue.fields.project?.name || 'Projet'}</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-3 text-gray-400 hover:text-gray-600 hover:bg-white/80 rounded-xl transition-all duration-200 backdrop-blur-sm"
             >
-              <X className="w-5 h-5" />
+              <X className="w-6 h-6" />
             </button>
           </div>
 
           {/* Content */}
-          <div className="p-6 space-y-6">
+          <div className="p-6 space-y-8 max-h-[70vh] overflow-y-auto">
             {/* Summary */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Résumé</h3>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-gray-800 leading-relaxed">{issue.fields.summary}</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                Résumé
+              </h3>
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200/50 shadow-sm">
+                <p className="text-gray-800 leading-relaxed text-lg">{issue.fields.summary}</p>
               </div>
             </div>
 
             {/* Description */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <Info className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <div className="w-2 h-2 bg-indigo-600 rounded-full"></div>
+                <Info className="w-5 h-5 text-indigo-600" />
                 Description
               </h3>
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200 shadow-sm">
+              <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-200/50 shadow-sm">
                 {issue.fields.description ? (
                   <div className="prose prose-sm max-w-none text-gray-800 leading-relaxed">
                     <div dangerouslySetInnerHTML={{ __html: issue.fields.description }} />
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 text-gray-500 italic">
-                    <AlertCircle className="w-4 h-4" />
+                  <div className="flex items-center gap-3 text-gray-500 italic bg-white/60 backdrop-blur-sm p-4 rounded-lg border border-gray-200">
+                    <AlertCircle className="w-5 h-5 text-gray-400" />
                     <span>Aucune description fournie</span>
                   </div>
                 )}
@@ -140,26 +145,35 @@ export default function SummaryModal({ isOpen, onClose, issue }: SummaryModalPro
             </div>
 
             {/* Details Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Status & Priority */}
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold text-gray-800 mb-2">Statut</h4>
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(issue.fields.status?.name || 'Inconnu')}`}>
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200/50 shadow-sm">
+                  <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                    Statut
+                  </h4>
+                  <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border shadow-sm ${getStatusColor(issue.fields.status?.name || 'Inconnu')}`}>
                     {issue.fields.status?.name || 'Inconnu'}
                   </span>
                 </div>
                 
-                <div>
-                  <h4 className="font-semibold text-gray-800 mb-2">Priorité</h4>
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getPriorityColor(issue.fields.priority?.name || 'Normal')}`}>
+                <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-6 border border-orange-200/50 shadow-sm">
+                  <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
+                    Priorité
+                  </h4>
+                  <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border shadow-sm ${getPriorityColor(issue.fields.priority?.name || 'Normal')}`}>
                     {issue.fields.priority?.name || 'Normal'}
                   </span>
                 </div>
 
-                <div>
-                  <h4 className="font-semibold text-gray-800 mb-2">Type</h4>
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-200/50 shadow-sm">
+                  <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    Type
+                  </h4>
+                  <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-800 border border-blue-200 shadow-sm">
                     {issue.fields.issuetype?.name || 'Non défini'}
                   </span>
                 </div>

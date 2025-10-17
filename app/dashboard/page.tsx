@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import DateDisplay from '../components/DateDisplay';
 import SummaryModal from '../components/SummaryModal';
+import EfficiencyModal from '../components/EfficiencyModal';
 
 interface JiraIssue {
   id: string;
@@ -82,11 +83,18 @@ interface DashboardState {
   statusFilter: string;
   priorityFilter: string;
   assigneeFilter: string;
+  actionClotureeFilter: string;
+  efficaciteFilter: string;
+  entiteOrigineFilter: string;
   sortField: string;
   sortDirection: 'asc' | 'desc';
   expandedIssues: Set<string>;
   selectedIssue: JiraIssue | null;
   showSummaryModal: boolean;
+  selectedEfficiencyIssue: JiraIssue | null;
+  showEfficiencyModal: boolean;
+  currentPage: number;
+  itemsPerPage: number;
 }
 
 export default function DashboardPage() {
@@ -98,11 +106,18 @@ export default function DashboardPage() {
     statusFilter: 'all',
     priorityFilter: 'all',
     assigneeFilter: 'all',
+    actionClotureeFilter: 'all',
+    efficaciteFilter: 'all',
+    entiteOrigineFilter: 'all',
     sortField: 'created',
     sortDirection: 'desc',
     expandedIssues: new Set(),
     selectedIssue: null,
-    showSummaryModal: false
+    showSummaryModal: false,
+    selectedEfficiencyIssue: null,
+    showEfficiencyModal: false,
+    currentPage: 1,
+    itemsPerPage: 10
   });
 
   // Récupérer les issues au chargement
@@ -149,13 +164,21 @@ export default function DashboardPage() {
   const getFilteredAndSortedIssues = () => {
     let filtered = state.issues.filter(issue => {
       const matchesSearch = issue.fields.summary.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
-                          issue.key.toLowerCase().includes(state.searchTerm.toLowerCase());
+                          issue.key.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
+                          (issue.fields.description && issue.fields.description.toLowerCase().includes(state.searchTerm.toLowerCase()));
       const matchesStatus = state.statusFilter === 'all' || issue.fields.status?.name === state.statusFilter;
       const matchesPriority = state.priorityFilter === 'all' || issue.fields.priority?.name?.toLowerCase() === state.priorityFilter.toLowerCase();
       const matchesAssignee = state.assigneeFilter === 'all' || 
                             (issue.fields.assignee?.displayName === state.assigneeFilter);
+      const matchesActionCloturee = state.actionClotureeFilter === 'all' || 
+                                  issue.fields.customfield_10001 === state.actionClotureeFilter;
+      const matchesEfficacite = state.efficaciteFilter === 'all' || 
+                               issue.fields.customfield_10006 === state.efficaciteFilter;
+      const matchesEntiteOrigine = state.entiteOrigineFilter === 'all' || 
+                                 issue.fields.customfield_10007 === state.entiteOrigineFilter;
 
-      return matchesSearch && matchesStatus && matchesPriority && matchesAssignee;
+      return matchesSearch && matchesStatus && matchesPriority && matchesAssignee && 
+             matchesActionCloturee && matchesEfficacite && matchesEntiteOrigine;
     });
 
     // Tri
@@ -237,6 +260,31 @@ export default function DashboardPage() {
     return filtered;
   };
 
+  // Fonctions de pagination
+  const getPaginatedIssues = () => {
+    const filtered = getFilteredAndSortedIssues();
+    const startIndex = (state.currentPage - 1) * state.itemsPerPage;
+    const endIndex = startIndex + state.itemsPerPage;
+    return filtered.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = () => {
+    const filtered = getFilteredAndSortedIssues();
+    return Math.ceil(filtered.length / state.itemsPerPage);
+  };
+
+  const handlePageChange = (page: number) => {
+    setState(prev => ({ ...prev, currentPage: page }));
+  };
+
+  const handleItemsPerPageChange = (itemsPerPage: number) => {
+    setState(prev => ({ 
+      ...prev, 
+      itemsPerPage, 
+      currentPage: 1 // Reset to first page when changing items per page
+    }));
+  };
+
   const handleSort = (field: string) => {
     setState(prev => ({
       ...prev,
@@ -270,6 +318,22 @@ export default function DashboardPage() {
       ...prev,
       selectedIssue: null,
       showSummaryModal: false
+    }));
+  };
+
+  const openEfficiencyModal = (issue: JiraIssue) => {
+    setState(prev => ({
+      ...prev,
+      selectedEfficiencyIssue: issue,
+      showEfficiencyModal: true
+    }));
+  };
+
+  const closeEfficiencyModal = () => {
+    setState(prev => ({
+      ...prev,
+      selectedEfficiencyIssue: null,
+      showEfficiencyModal: false
     }));
   };
 
@@ -333,15 +397,26 @@ export default function DashboardPage() {
         case 'assignee':
           value = issue.fields.assignee?.displayName || 'Non assigné';
           break;
+        case 'actionCloturee':
+          value = issue.fields.customfield_10001 || 'Non défini';
+          break;
+        case 'efficacite':
+          value = issue.fields.customfield_10006 || 'Non défini';
+          break;
+        case 'entiteOrigine':
+          value = issue.fields.customfield_10007 || 'Non défini';
+          break;
         default:
           return;
       }
-      values.add(value);
+      if (value) values.add(value);
     });
     return Array.from(values).sort();
   };
 
-  const filteredIssues = getFilteredAndSortedIssues();
+  const filteredIssues = getPaginatedIssues();
+  const totalFilteredIssues = getFilteredAndSortedIssues();
+  const totalPages = getTotalPages();
 
   if (state.loading) {
     return (
@@ -373,36 +448,43 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="max-w-7xl mx-auto p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6">
         {/* En-tête */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-               <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                 Dashboard DYS - PowerBI
-               </h1>
-               <p className="text-gray-600 mt-2">Gestion des issues du projet Ticketing Qualité (Source: PowerBI API)</p>
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="space-y-2">
+              <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                Dashboard DYS - PowerBI
+              </h1>
+              <p className="text-gray-600 text-sm sm:text-base">Gestion des issues du projet Ticketing Qualité (Source: PowerBI API)</p>
             </div>
-            <div className="flex items-center gap-3">
-              <Button onClick={fetchIssues} variant="outline" size="sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <Button 
+                onClick={fetchIssues} 
+                variant="outline" 
+                size="sm"
+                className="bg-white/80 backdrop-blur-sm border-gray-200 hover:bg-white hover:shadow-md transition-all duration-200"
+              >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Actualiser
               </Button>
-              <div className="text-sm text-gray-500">
-                {filteredIssues.length} issues sur {state.issues.length}
+              <div className="text-xs sm:text-sm text-gray-500 bg-white/60 backdrop-blur-sm px-3 py-2 rounded-lg border border-gray-200">
+                {filteredIssues.length} issues sur {totalFilteredIssues.length} (page {state.currentPage}/{totalPages})
               </div>
             </div>
           </div>
         </div>
 
         {/* Filtres et recherche */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6 border border-gray-200">
-          <div className="flex items-center gap-4 mb-4">
-            <Filter className="w-5 h-5 text-gray-600" />
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 mb-6 border border-gray-200/50">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Filter className="w-5 h-5 text-blue-600" />
+            </div>
             <h3 className="text-lg font-semibold text-gray-800">Filtres et recherche</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
             {/* Recherche */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -410,20 +492,20 @@ export default function DashboardPage() {
                 placeholder="Rechercher dans les résumés..."
                 value={state.searchTerm}
                 onChange={(e) => setState(prev => ({ ...prev, searchTerm: e.target.value }))}
-                className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white/80 backdrop-blur-sm transition-all duration-200"
               />
             </div>
 
             {/* Filtre statut */}
             <div>
               <Select value={state.statusFilter} onValueChange={(value) => setState(prev => ({ ...prev, statusFilter: value }))}>
-                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white/80 backdrop-blur-sm transition-all duration-200">
                   <SelectValue placeholder="Tous les statuts" />
                 </SelectTrigger>
-                <SelectContent className="z-50">
-                  <SelectItem value="all">Tous les statuts</SelectItem>
+                <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
+                  <SelectItem value="all" className="text-gray-900 hover:bg-blue-50">Tous les statuts</SelectItem>
                   {getUniqueValues('status').map((status) => (
-                    <SelectItem key={status as string} value={status as string}>{status as string}</SelectItem>
+                    <SelectItem key={status as string} value={status as string} className="text-gray-900 hover:bg-blue-50">{status as string}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -432,13 +514,13 @@ export default function DashboardPage() {
             {/* Filtre priorité */}
             <div>
               <Select value={state.priorityFilter} onValueChange={(value) => setState(prev => ({ ...prev, priorityFilter: value }))}>
-                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white/80 backdrop-blur-sm transition-all duration-200">
                   <SelectValue placeholder="Toutes les priorités" />
                 </SelectTrigger>
-                <SelectContent className="z-50">
-                  <SelectItem value="all">Toutes les priorités</SelectItem>
+                <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
+                  <SelectItem value="all" className="text-gray-900 hover:bg-blue-50">Toutes les priorités</SelectItem>
                   {getUniqueValues('priority').map((priority) => (
-                    <SelectItem key={priority as string} value={priority as string}>{priority as string}</SelectItem>
+                    <SelectItem key={priority as string} value={priority as string} className="text-gray-900 hover:bg-blue-50">{priority as string}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -447,13 +529,73 @@ export default function DashboardPage() {
             {/* Filtre assigné */}
             <div>
               <Select value={state.assigneeFilter} onValueChange={(value) => setState(prev => ({ ...prev, assigneeFilter: value }))}>
-                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white/80 backdrop-blur-sm transition-all duration-200">
                   <SelectValue placeholder="Tous les assignés" />
                 </SelectTrigger>
-                <SelectContent className="z-50">
-                  <SelectItem value="all">Tous les assignés</SelectItem>
+                <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
+                  <SelectItem value="all" className="text-gray-900 hover:bg-blue-50">Tous les assignés</SelectItem>
                   {getUniqueValues('assignee').map((assignee) => (
-                    <SelectItem key={assignee as string} value={assignee as string}>{assignee as string}</SelectItem>
+                    <SelectItem key={assignee as string} value={assignee as string} className="text-gray-900 hover:bg-blue-50">{assignee as string}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Nombre d'éléments par page */}
+            <div>
+              <Select value={state.itemsPerPage.toString()} onValueChange={(value) => handleItemsPerPageChange(parseInt(value))}>
+                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white/80 backdrop-blur-sm transition-all duration-200">
+                  <SelectValue placeholder="Éléments par page" />
+                </SelectTrigger>
+                <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
+                  <SelectItem value="5" className="text-gray-900 hover:bg-blue-50">5 par page</SelectItem>
+                  <SelectItem value="10" className="text-gray-900 hover:bg-blue-50">10 par page</SelectItem>
+                  <SelectItem value="20" className="text-gray-900 hover:bg-blue-50">20 par page</SelectItem>
+                  <SelectItem value="50" className="text-gray-900 hover:bg-blue-50">50 par page</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Filtre Action clôturée */}
+            <div>
+              <Select value={state.actionClotureeFilter} onValueChange={(value) => setState(prev => ({ ...prev, actionClotureeFilter: value }))}>
+                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white/80 backdrop-blur-sm transition-all duration-200">
+                  <SelectValue placeholder="Action clôturée" />
+                </SelectTrigger>
+                <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
+                  <SelectItem value="all" className="text-gray-900 hover:bg-blue-50">Toutes les actions</SelectItem>
+                  {getUniqueValues('actionCloturee').map((value) => (
+                    <SelectItem key={value as string} value={value as string} className="text-gray-900 hover:bg-blue-50">{value as string}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Filtre Efficacité */}
+            <div>
+              <Select value={state.efficaciteFilter} onValueChange={(value) => setState(prev => ({ ...prev, efficaciteFilter: value }))}>
+                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white/80 backdrop-blur-sm transition-all duration-200">
+                  <SelectValue placeholder="Efficacité" />
+                </SelectTrigger>
+                <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
+                  <SelectItem value="all" className="text-gray-900 hover:bg-blue-50">Toutes les efficacités</SelectItem>
+                  {getUniqueValues('efficacite').map((value) => (
+                    <SelectItem key={value as string} value={value as string} className="text-gray-900 hover:bg-blue-50">{value as string}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Filtre Entité Origine */}
+            <div>
+              <Select value={state.entiteOrigineFilter} onValueChange={(value) => setState(prev => ({ ...prev, entiteOrigineFilter: value }))}>
+                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white/80 backdrop-blur-sm transition-all duration-200">
+                  <SelectValue placeholder="Entité Origine" />
+                </SelectTrigger>
+                <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
+                  <SelectItem value="all" className="text-gray-900 hover:bg-blue-50">Toutes les entités</SelectItem>
+                  {getUniqueValues('entiteOrigine').map((value) => (
+                    <SelectItem key={value as string} value={value as string} className="text-gray-900 hover:bg-blue-50">{value as string}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -468,9 +610,13 @@ export default function DashboardPage() {
                   searchTerm: '', 
                   statusFilter: 'all', 
                   priorityFilter: 'all', 
-                  assigneeFilter: 'all' 
+                  assigneeFilter: 'all',
+                  actionClotureeFilter: 'all',
+                  efficaciteFilter: 'all',
+                  entiteOrigineFilter: 'all',
+                  currentPage: 1
                 }))}
-                className="w-full border-gray-300 hover:bg-gray-50"
+                className="w-full border-gray-300 hover:bg-gray-50 bg-white/80 backdrop-blur-sm transition-all duration-200 hover:shadow-md"
               >
                 <Filter className="w-4 h-4 mr-2" />
                 Réinitialiser
@@ -480,11 +626,11 @@ export default function DashboardPage() {
         </div>
 
         {/* Table des issues */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden border border-gray-200/50">
+          <div className="max-h-[600px] overflow-y-auto">
             <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50 border-b border-gray-200">
+              <TableHeader className="sticky top-0 z-20 bg-gradient-to-r from-gray-50 to-blue-50 shadow-lg border-b-2 border-gray-300">
+                <TableRow className="border-b-0">
                   <TableHead className="w-12 px-4 py-3"></TableHead>
                   <TableHead 
                     className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[120px]"
@@ -620,7 +766,7 @@ export default function DashboardPage() {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[120px]"
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 w-[120px]"
                     onClick={() => handleSort('customfield_10006')}
                   >
                     <div className="flex items-center gap-2 font-semibold text-gray-700">
@@ -646,18 +792,19 @@ export default function DashboardPage() {
             <TableBody>
               {filteredIssues.map((issue) => (
                 <React.Fragment key={issue.id}>
-                  <TableRow className="hover:bg-gray-50 border-b border-gray-100">
+                  <TableRow className="hover:bg-blue-50/50 border-b border-gray-100 transition-colors duration-200 h-16">
                     <TableCell className="px-4 py-3">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => toggleExpanded(issue.key)}
-                        className="p-1 hover:bg-gray-200"
+                        className="p-2 hover:bg-blue-100 border border-gray-200 hover:border-blue-300 transition-all duration-200 rounded-lg"
+                        title={state.expandedIssues.has(issue.key) ? "Réduire les détails" : "Voir les détails"}
                       >
                         {state.expandedIssues.has(issue.key) ? (
-                          <ChevronUp className="w-4 h-4" />
+                          <ChevronUp className="w-4 h-4 text-blue-600" />
                         ) : (
-                          <ChevronDown className="w-4 h-4" />
+                          <ChevronDown className="w-4 h-4 text-gray-600" />
                         )}
                       </Button>
                     </TableCell>
@@ -705,12 +852,12 @@ export default function DashboardPage() {
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-3">
-                      <Badge className={`${getStatusColor(issue.fields.status?.name || 'Inconnu')} text-xs`}>
+                      <Badge className={`${getStatusColor(issue.fields.status?.name || 'Inconnu')} text-xs px-3 py-1 w-full justify-center`}>
                         {issue.fields.status?.name || 'Inconnu'}
                       </Badge>
                     </TableCell>
                     <TableCell className="px-4 py-3">
-                      <Badge className={`${getPriorityColor(issue.fields.priority?.name || 'Normal')} text-xs`}>
+                      <Badge className={`${getPriorityColor(issue.fields.priority?.name || 'Normal')} text-xs px-3 py-1 w-full justify-center`}>
                         {issue.fields.priority?.name || 'Normal'}
                       </Badge>
                     </TableCell>
@@ -720,12 +867,25 @@ export default function DashboardPage() {
                           <img
                             src={issue.fields.assignee?.avatarUrls?.['24x24'] || '/default-avatar.png'}
                             alt={issue.fields.assignee?.displayName || 'Utilisateur'}
-                            className="w-6 h-6 rounded-full"
+                            className="w-6 h-6 rounded-full border border-gray-200"
                           />
-                          <span className="text-sm truncate max-w-[120px]">{issue.fields.assignee?.displayName || 'Utilisateur'}</span>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-gray-900 truncate max-w-[120px]">
+                              {issue.fields.assignee?.displayName || 'Utilisateur'}
+                            </span>
+                            <span className="text-xs text-gray-500">Assigné</span>
+                          </div>
                         </div>
                       ) : (
-                        <span className="text-sm text-gray-500">Non assigné</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
+                            <User className="w-3 h-3 text-gray-400" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm text-gray-500">Non assigné</span>
+                            <span className="text-xs text-gray-400">En attente</span>
+                          </div>
+                        </div>
                       )}
                     </TableCell>
                     <TableCell className="px-4 py-3">
@@ -762,7 +922,7 @@ export default function DashboardPage() {
                       </Button>
                     </TableCell>
                     <TableCell className="px-4 py-3">
-                      <Badge className={`${issue.fields.customfield_10001 === 'Oui' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-red-100 text-red-800 border-red-200'} text-xs`}>
+                      <Badge className={`${issue.fields.customfield_10001 === 'Oui' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-red-100 text-red-800 border-red-200'} text-xs px-3 py-1 w-full justify-center`}>
                         {issue.fields.customfield_10001 || 'Non défini'}
                       </Badge>
                     </TableCell>
@@ -807,9 +967,17 @@ export default function DashboardPage() {
                       </span>
                     </TableCell>
                     <TableCell className="px-4 py-3">
-                      <Badge className={`${issue.fields.customfield_10006 === 'EFFICACE' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'} text-xs`}>
-                        {issue.fields.customfield_10006 || 'Non défini'}
-                      </Badge>
+                      <button
+                        onClick={() => openEfficiencyModal(issue)}
+                        className="w-full text-left hover:bg-blue-50 rounded-lg p-2 transition-colors duration-200"
+                        title="Voir les détails de l'efficacité"
+                      >
+                        <Badge className={`${issue.fields.customfield_10006 === 'EFFICACE' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'} text-xs px-3 py-1 w-full justify-center max-w-[120px] truncate`}>
+                          <span className="truncate">
+                            {issue.fields.customfield_10006 || 'Non défini'}
+                          </span>
+                        </Badge>
+                      </button>
                     </TableCell>
                     <TableCell className="px-4 py-3">
                       <span className="text-sm text-gray-700">
@@ -937,12 +1105,88 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Pagination */}
+        {totalFilteredIssues.length > 0 && (
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-gray-200/50">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-sm text-gray-600 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-lg border border-gray-200">
+                Affichage de {((state.currentPage - 1) * state.itemsPerPage) + 1} à {Math.min(state.currentPage * state.itemsPerPage, totalFilteredIssues.length)} sur {totalFilteredIssues.length} issues
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {/* Bouton précédent */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(state.currentPage - 1)}
+                  disabled={state.currentPage === 1}
+                  className="flex items-center gap-1 bg-white/80 backdrop-blur-sm border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 disabled:opacity-50"
+                >
+                  <ChevronDown className="w-4 h-4 rotate-90" />
+                  Précédent
+                </Button>
+                
+                {/* Numéros de page */}
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const pageNumber = Math.max(1, Math.min(totalPages - 4, state.currentPage - 2)) + i;
+                    if (pageNumber > totalPages) return null;
+                    
+                    return (
+                      <Button
+                        key={pageNumber}
+                        variant={state.currentPage === pageNumber ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(pageNumber)}
+                        className={`w-8 h-8 p-0 transition-all duration-200 ${
+                          state.currentPage === pageNumber 
+                            ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md" 
+                            : "bg-white/80 backdrop-blur-sm border-gray-200 hover:bg-blue-50 hover:border-blue-300"
+                        }`}
+                      >
+                        {pageNumber}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                {/* Bouton suivant */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(state.currentPage + 1)}
+                  disabled={state.currentPage === totalPages}
+                  className="flex items-center gap-1 bg-white/80 backdrop-blur-sm border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 disabled:opacity-50"
+                >
+                  Suivant
+                  <ChevronDown className="w-4 h-4 -rotate-90" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Message si aucun issue */}
-        {filteredIssues.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-lg shadow-md">
-            <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg">Aucun issue trouvé</p>
-            <p className="text-gray-500">Essayez de modifier vos filtres de recherche</p>
+        {filteredIssues.length === 0 && totalFilteredIssues.length === 0 && (
+          <div className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50">
+            <div className="p-4 bg-blue-100 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+              <AlertCircle className="w-10 h-10 text-blue-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">Aucun issue trouvé</h3>
+            <p className="text-gray-600 mb-4">Essayez de modifier vos filtres de recherche</p>
+            <Button 
+              onClick={() => setState(prev => ({ 
+                ...prev, 
+                searchTerm: '', 
+                statusFilter: 'all', 
+                priorityFilter: 'all', 
+                assigneeFilter: 'all',
+                currentPage: 1
+              }))}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Réinitialiser les filtres
+            </Button>
           </div>
         )}
       </div>
@@ -952,6 +1196,13 @@ export default function DashboardPage() {
         isOpen={state.showSummaryModal}
         onClose={closeSummaryModal}
         issue={state.selectedIssue}
+      />
+
+      {/* Modal pour l'efficacité */}
+      <EfficiencyModal
+        isOpen={state.showEfficiencyModal}
+        onClose={closeEfficiencyModal}
+        issue={state.selectedEfficiencyIssue}
       />
     </div>
   );
