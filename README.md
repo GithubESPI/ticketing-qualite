@@ -1,36 +1,169 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Tableau de bord Jira - Système de gestion des tickets
 
-## Getting Started
+Un tableau de bord moderne et interactif pour la gestion des tickets Jira, développé avec Next.js 15 et TypeScript.
 
-First, run the development server:
+## 🚀 Fonctionnalités
+
+- **Interface moderne** : Design responsive avec animations fluides
+- **Gestion des tickets** : Affichage, filtrage et suivi des tickets
+- **Statistiques en temps réel** : Tableaux de bord avec métriques
+- **Filtres avancés** : Filtrage par statut, priorité, assigné
+- **API intégrée** : Connexion à l'API Jira avec fallback sur données de démonstration
+- **Composants modulaires** : Architecture composant réutilisable
+- **Variables d'environnement** : Configuration sécurisée
+
+## 🏗️ Architecture
+
+### Structure des composants
+
+```
+app/
+├── components/           # Composants réutilisables
+│   ├── LoadingSpinner.tsx
+│   ├── ErrorAlert.tsx
+│   ├── StatsCards.tsx
+│   ├── FilterButtons.tsx
+│   ├── TicketCard.tsx
+│   └── EmptyState.tsx
+├── hooks/               # Hooks personnalisés
+│   └── useTickets.ts
+├── config/              # Configuration
+│   └── env.ts
+└── page.tsx             # Page principale
+```
+
+### Hooks personnalisés
+
+- **`useTickets`** : Gestion des données des tickets, API calls, états de chargement
+
+### Composants
+
+- **`LoadingSpinner`** : Indicateur de chargement animé
+- **`ErrorAlert`** : Affichage des erreurs avec possibilité de fermeture
+- **`StatsCards`** : Cartes de statistiques avec animations
+- **`FilterButtons`** : Boutons de filtrage interactifs
+- **`TicketCard`** : Carte individuelle de ticket avec actions
+- **`EmptyState`** : État vide avec suggestions d'actions
+
+## 🛠️ Installation et configuration
+
+### 1. Installation des dépendances
+
+```bash
+npm install
+# ou
+yarn install
+```
+
+### 2. Configuration des variables d'environnement
+
+Créez un fichier `.env.local` à la racine du projet :
+
+```env
+# Configuration API Jira
+NEXT_PUBLIC_JIRA_TOKEN=votre_token_ici
+NEXT_PUBLIC_JIRA_EMAIL=votre_email@exemple.com
+NEXT_PUBLIC_JIRA_URL=https://votre-api-jira.com/endpoint
+```
+
+### 3. Lancement du serveur de développement
 
 ```bash
 npm run dev
-# or
+# ou
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Ouvrez [http://localhost:3000](http://localhost:3000) dans votre navigateur.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🎨 Design et UX
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Couleurs et thème
 
-## Learn More
+- **Palette principale** : Bleu (#3B82F6) et Violet (#8B5CF6)
+- **Gradients** : Dégradés modernes pour les cartes et boutons
+- **Animations** : Transitions fluides et micro-interactions
+- **Responsive** : Design adaptatif pour tous les écrans
 
-To learn more about Next.js, take a look at the following resources:
+### Animations
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Entrée** : Animation slide-in depuis le bas
+- **Hover** : Effets de survol avec scale et shadow
+- **Loading** : Spinners animés avec effets de profondeur
+- **Transitions** : Transitions CSS fluides
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🔧 Configuration avancée
 
-## Deploy on Vercel
+### Variables d'environnement
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Le système utilise des variables d'environnement pour la configuration de l'API :
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```typescript
+// app/config/env.ts
+export const config = {
+  jira: {
+    token: process.env.NEXT_PUBLIC_JIRA_TOKEN,
+    email: process.env.NEXT_PUBLIC_JIRA_EMAIL,
+    url: process.env.NEXT_PUBLIC_JIRA_URL
+  }
+};
+```
+
+### Personnalisation des couleurs
+
+Modifiez les couleurs dans `app/globals.css` :
+
+```css
+/* Gradients personnalisés */
+.gradient-blue {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+```
+
+## 📱 Responsive Design
+
+- **Mobile** : Layout en colonne unique
+- **Tablet** : Grille 2 colonnes pour les statistiques
+- **Desktop** : Grille 4 colonnes avec sidebar
+
+## 🚀 Déploiement
+
+### Vercel (Recommandé)
+
+```bash
+npm run build
+vercel --prod
+```
+
+### Variables d'environnement en production
+
+Assurez-vous de configurer les variables d'environnement dans votre plateforme de déploiement :
+
+- `NEXT_PUBLIC_JIRA_TOKEN`
+- `NEXT_PUBLIC_JIRA_EMAIL`
+- `NEXT_PUBLIC_JIRA_URL`
+
+## 🤝 Contribution
+
+1. Fork le projet
+2. Créez une branche feature (`git checkout -b feature/AmazingFeature`)
+3. Committez vos changements (`git commit -m 'Add some AmazingFeature'`)
+4. Push vers la branche (`git push origin feature/AmazingFeature`)
+5. Ouvrez une Pull Request
+
+## 📄 Licence
+
+Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
+
+## 🆘 Support
+
+Pour toute question ou problème :
+
+1. Vérifiez la configuration des variables d'environnement
+2. Consultez les logs de la console
+3. Assurez-vous que l'API Jira est accessible
+4. Créez une issue sur GitHub
+
+---
+
+Développé avec ❤️ en utilisant Next.js 15, TypeScript et Tailwind CSS.

@@ -1,103 +1,263 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState } from 'react';
+import { useTickets } from './hooks/useTickets';
+import LoadingSpinner from './components/LoadingSpinner';
+import ErrorAlert from './components/ErrorAlert';
+import StatsCards from './components/StatsCards';
+import FilterButtons from './components/FilterButtons';
+import TicketCard from './components/TicketCard';
+import EmptyState from './components/EmptyState';
+import ApiDebugger from './components/ApiDebugger';
+import ApiTester from './components/ApiTester';
+import JiraApiTester from './components/JiraApiTester';
+import ConfigurationGuide from './components/ConfigurationGuide';
+import CreateTicketForm from './components/CreateTicketForm';
+import DYSProjectView from './components/DYSProjectView';
+import { RefreshCw, Settings, Bell, User, Bug, TestTube, Zap, HelpCircle, FolderOpen } from 'lucide-react';
+
+export default function JiraDashboard() {
+  const [filter, setFilter] = useState('all');
+  const [showDebugger, setShowDebugger] = useState(false);
+  const [showApiTester, setShowApiTester] = useState(false);
+  const [showJiraTester, setShowJiraTester] = useState(false);
+  const [showConfigGuide, setShowConfigGuide] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showProjects, setShowProjects] = useState(false);
+  const { tickets, loading, error, fetchTickets, getStats, getFilteredTickets } = useTickets();
+
+  const stats = getStats();
+  const filteredTickets = getFilteredTickets(filter);
+
+  const handleRefresh = () => {
+    fetchTickets();
+  };
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      {/* En-tête avec navigation */}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Tableau de bord Jira
+              </h1>
+              <p className="text-gray-600 mt-1">Gestion et suivi de vos tickets</p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleRefresh}
+                className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                title="Actualiser"
+              >
+                <RefreshCw className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setShowDebugger(!showDebugger)}
+                className={`p-2 rounded-lg transition-colors ${
+                  showDebugger 
+                    ? 'text-blue-600 bg-blue-50' 
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                }`}
+                title="Debug API"
+              >
+                <Bug className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setShowApiTester(true)}
+                className="p-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                title="Tester l'API"
+              >
+                <TestTube className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setShowJiraTester(true)}
+                className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                title="Tester l'API Jira"
+              >
+                <Zap className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setShowConfigGuide(true)}
+                className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                title="Guide de configuration"
+              >
+                <HelpCircle className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setShowCreateForm(!showCreateForm)}
+                className={`p-2 rounded-lg transition-colors ${
+                  showCreateForm 
+                    ? 'text-green-600 bg-green-50' 
+                    : 'text-gray-600 hover:text-green-600 hover:bg-green-50'
+                }`}
+                title="Créer un ticket"
+              >
+                <User className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setShowProjects(!showProjects)}
+                className={`p-2 rounded-lg transition-colors ${
+                  showProjects 
+                    ? 'text-purple-600 bg-purple-50' 
+                    : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
+                }`}
+                title="Voir le projet DYS"
+              >
+                <FolderOpen className="w-5 h-5" />
+              </button>
+              <button className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors">
+                <Bell className="w-5 h-5" />
+              </button>
+              <button className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors">
+                <Settings className="w-5 h-5" />
+              </button>
+              <div className="flex items-center gap-2 pl-3 border-l border-gray-200">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-sm font-medium text-gray-700">Admin</span>
+              </div>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+      </header>
+
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Message d'erreur */}
+        {error && (
+          <ErrorAlert 
+            error={`Connexion à l'API en cours... Affichage des données de démonstration.`}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        )}
+
+        {/* Statistiques */}
+        <StatsCards stats={stats} />
+
+        {/* Filtres */}
+        <FilterButtons 
+          currentFilter={filter} 
+          onFilterChange={setFilter} 
+        />
+
+        {/* Liste des tickets */}
+        <div className="space-y-4">
+          {filteredTickets.length > 0 ? (
+            filteredTickets.map((ticket, index) => (
+              <TicketCard 
+                key={ticket.id || index} 
+                ticket={ticket} 
+                index={index} 
+              />
+            ))
+          ) : (
+            <EmptyState 
+              filter={filter} 
+              onResetFilter={() => setFilter('all')} 
+            />
+          )}
+        </div>
+
+        {/* Pied de page avec informations */}
+        <footer className="mt-12 pt-8 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row items-center justify-between text-sm text-gray-500">
+            <div className="flex items-center gap-4">
+              <span>Dernière mise à jour: {new Date().toLocaleString('fr-FR')}</span>
+              <span>•</span>
+              <span>{tickets.length} tickets au total</span>
+            </div>
+            <div className="flex items-center gap-2 mt-2 sm:mt-0">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span>Système opérationnel</span>
+            </div>
+          </div>
+        </footer>
+      </div>
+
+      {/* Debugger API */}
+      <ApiDebugger 
+        isVisible={showDebugger} 
+        onToggle={() => setShowDebugger(false)} 
+      />
+
+      {/* Testeur API */}
+      <ApiTester 
+        isVisible={showApiTester} 
+        onClose={() => setShowApiTester(false)} 
+      />
+
+      {/* Testeur API Jira */}
+      <JiraApiTester 
+        isVisible={showJiraTester} 
+        onClose={() => setShowJiraTester(false)} 
+      />
+
+      {/* Guide de configuration */}
+      <ConfigurationGuide 
+        isVisible={showConfigGuide} 
+        onClose={() => setShowConfigGuide(false)} 
+      />
+
+      {/* Formulaire de création de ticket */}
+      {showCreateForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-800">Créer un ticket Jira</h2>
+                <button
+                  onClick={() => setShowCreateForm(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <CreateTicketForm 
+                onTicketCreated={(ticketKey) => {
+                  console.log('Ticket créé:', ticketKey);
+                  setShowCreateForm(false);
+                  // Actualiser la liste des tickets
+                  fetchTickets();
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Liste des projets */}
+      {showProjects && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-800">Projet DYS - Ticketing Qualité</h2>
+                <button
+                  onClick={() => setShowProjects(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <DYSProjectView 
+                onIssueSelect={(issue) => {
+                  console.log('Issue sélectionné:', issue);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
