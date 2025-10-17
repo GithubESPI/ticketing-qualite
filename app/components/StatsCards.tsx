@@ -56,8 +56,7 @@ export default function StatsCards({ stats }: StatsCardsProps) {
       {cards.map((card, index) => (
         <div
           key={card.title}
-          className={`bg-white rounded-xl shadow-lg p-6 border-t-4 ${card.borderColor} hover:shadow-xl transition-all duration-300 hover:scale-105 animate-in slide-in-from-bottom-4`}
-          style={{ animationDelay: `${index * 100}ms` }}
+          className={`bg-white rounded-xl shadow-lg p-6 border-t-4 ${card.borderColor} hover:shadow-xl transition-all duration-300 hover:scale-105`}
         >
           <div className="flex items-center justify-between">
             <div className="flex-1">

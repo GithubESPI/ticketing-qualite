@@ -42,8 +42,7 @@ export default function TicketCard({ ticket, index }: TicketCardProps) {
 
   return (
     <div 
-      className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border border-gray-100 group animate-in slide-in-from-bottom-4"
-      style={{ animationDelay: `${index * 100}ms` }}
+      className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border border-gray-100 group"
     >
       {/* En-tête du ticket */}
       <div className="flex items-start justify-between mb-4">
