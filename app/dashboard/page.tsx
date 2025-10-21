@@ -487,7 +487,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <div className="max-w-7xl mx-auto p-4 sm:p-6">
+      <div className="w-full p-4 sm:p-6">
         {/* En-tête */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -515,7 +515,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Filtres et recherche */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 mb-6 border border-gray-200/50">
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
           <div className="flex items-center gap-4 mb-6">
             <div className="p-2 bg-blue-100 rounded-lg">
               <Filter className="w-5 h-5 text-blue-600" />
@@ -525,23 +525,23 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
             {/* Recherche */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600 w-4 h-4" />
               <Input
                 placeholder="Rechercher dans les résumés..."
                 value={state.searchTerm}
                 onChange={(e) => setState(prev => ({ ...prev, searchTerm: e.target.value }))}
-                className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white/80 backdrop-blur-sm transition-all duration-200"
+                className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500 transition-all duration-200"
               />
             </div>
 
             {/* Filtre statut */}
             <div>
               <Select value={state.statusFilter} onValueChange={(value) => setState(prev => ({ ...prev, statusFilter: value }))}>
-                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white/80 backdrop-blur-sm transition-all duration-200">
+                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-gray-900 transition-all duration-200">
                   <SelectValue placeholder="Tous les statuts" />
                 </SelectTrigger>
                 <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
-                  <SelectItem value="all" className="text-gray-900 hover:bg-blue-50">Tous les statuts</SelectItem>
+                  <SelectItem value="all" className="text-gray-900 hover:bg-blue-50 focus:bg-blue-50">Tous les statuts</SelectItem>
                   {getUniqueValues('status').map((status) => (
                     <SelectItem key={status as string} value={status as string} className="text-gray-900 hover:bg-blue-50">{status as string}</SelectItem>
                   ))}
@@ -552,7 +552,7 @@ export default function DashboardPage() {
             {/* Filtre priorité */}
             <div>
               <Select value={state.priorityFilter} onValueChange={(value) => setState(prev => ({ ...prev, priorityFilter: value }))}>
-                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white/80 backdrop-blur-sm transition-all duration-200">
+                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-gray-900 transition-all duration-200">
                   <SelectValue placeholder="Toutes les priorités" />
                 </SelectTrigger>
                 <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
@@ -567,7 +567,7 @@ export default function DashboardPage() {
             {/* Filtre assigné */}
             <div>
               <Select value={state.assigneeFilter} onValueChange={(value) => setState(prev => ({ ...prev, assigneeFilter: value }))}>
-                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white/80 backdrop-blur-sm transition-all duration-200">
+                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-gray-900 transition-all duration-200">
                   <SelectValue placeholder="Tous les assignés" />
                 </SelectTrigger>
                 <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
@@ -582,7 +582,7 @@ export default function DashboardPage() {
             {/* Nombre d'éléments par page */}
             <div>
               <Select value={state.itemsPerPage.toString()} onValueChange={(value) => handleItemsPerPageChange(parseInt(value))}>
-                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white/80 backdrop-blur-sm transition-all duration-200">
+                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-gray-900 transition-all duration-200">
                   <SelectValue placeholder="Éléments par page" />
                 </SelectTrigger>
                 <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
@@ -597,7 +597,7 @@ export default function DashboardPage() {
             {/* Filtre Action clôturée */}
             <div>
               <Select value={state.actionClotureeFilter} onValueChange={(value) => setState(prev => ({ ...prev, actionClotureeFilter: value }))}>
-                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white/80 backdrop-blur-sm transition-all duration-200">
+                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-gray-900 transition-all duration-200">
                   <SelectValue placeholder="Action clôturée" />
                 </SelectTrigger>
                 <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
@@ -612,7 +612,7 @@ export default function DashboardPage() {
             {/* Filtre Efficacité */}
             <div>
               <Select value={state.efficaciteFilter} onValueChange={(value) => setState(prev => ({ ...prev, efficaciteFilter: value }))}>
-                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white/80 backdrop-blur-sm transition-all duration-200">
+                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-gray-900 transition-all duration-200">
                   <SelectValue placeholder="Efficacité" />
                 </SelectTrigger>
                 <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
@@ -627,7 +627,7 @@ export default function DashboardPage() {
             {/* Filtre Entité Origine */}
             <div>
               <Select value={state.entiteOrigineFilter} onValueChange={(value) => setState(prev => ({ ...prev, entiteOrigineFilter: value }))}>
-                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white/80 backdrop-blur-sm transition-all duration-200">
+                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-gray-900 transition-all duration-200">
                   <SelectValue placeholder="Entité Origine" />
                 </SelectTrigger>
                 <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
@@ -642,7 +642,7 @@ export default function DashboardPage() {
             {/* Filtre Processus */}
             <div>
               <Select value={state.processusFilter} onValueChange={(value) => setState(prev => ({ ...prev, processusFilter: value }))}>
-                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white/80 backdrop-blur-sm transition-all duration-200">
+                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-gray-900 transition-all duration-200">
                   <SelectValue placeholder="Processus" />
                 </SelectTrigger>
                 <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
@@ -670,7 +670,7 @@ export default function DashboardPage() {
                   processusFilter: 'all',
                   currentPage: 1
                 }))}
-                className="w-full border-gray-300 hover:bg-gray-50 bg-white/80 backdrop-blur-sm transition-all duration-200 hover:shadow-md"
+                className="w-full border-gray-300 hover:bg-gray-50 bg-white text-gray-700 hover:text-gray-900 transition-all duration-200 hover:shadow-md"
               >
                 <Filter className="w-4 h-4 mr-2" />
                 Réinitialiser
@@ -680,14 +680,14 @@ export default function DashboardPage() {
         </div>
 
         {/* Table des issues */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden border border-gray-200/50">
-          <div className="max-h-[600px] overflow-y-auto">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+          <div className="max-h-[70vh] overflow-y-auto">
             <Table>
               <TableHeader className="sticky top-0 z-20 bg-gradient-to-r from-gray-50 to-blue-50 shadow-lg border-b-2 border-gray-300">
                 <TableRow className="border-b-0">
                   <TableHead className="w-12 px-4 py-3"></TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[120px]"
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[100px]"
                     onClick={() => handleSort('key')}
                   >
                     <div className="flex items-center gap-2 font-semibold text-gray-700">
@@ -698,7 +698,7 @@ export default function DashboardPage() {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[400px]"
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[300px] flex-1"
                     onClick={() => handleSort('summary')}
                   >
                     <div className="flex items-center gap-2 font-semibold text-gray-700">
@@ -709,7 +709,7 @@ export default function DashboardPage() {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[120px]"
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[100px]"
                     onClick={() => handleSort('status')}
                   >
                     <div className="flex items-center gap-2 font-semibold text-gray-700">
@@ -720,7 +720,7 @@ export default function DashboardPage() {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[120px]"
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[100px]"
                     onClick={() => handleSort('priority')}
                   >
                     <div className="flex items-center gap-2 font-semibold text-gray-700">
@@ -731,7 +731,7 @@ export default function DashboardPage() {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[150px]"
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[130px]"
                     onClick={() => handleSort('assignee')}
                   >
                     <div className="flex items-center gap-2 font-semibold text-gray-700">
@@ -742,7 +742,7 @@ export default function DashboardPage() {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[120px]"
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[100px]"
                     onClick={() => handleSort('created')}
                   >
                     <div className="flex items-center gap-2 font-semibold text-gray-700">
@@ -753,7 +753,7 @@ export default function DashboardPage() {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[200px]"
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[180px]"
                     onClick={() => handleSort('description')}
                   >
                     <div className="flex items-center gap-2 font-semibold text-gray-700">
@@ -765,7 +765,7 @@ export default function DashboardPage() {
                   </TableHead>
                   <TableHead className="w-12 px-4 py-3 font-semibold text-gray-700">Actions</TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[120px]"
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[100px]"
                     onClick={() => handleSort('customfield_10001')}
                   >
                     <div className="flex items-center gap-2 font-semibold text-gray-700">
@@ -776,7 +776,7 @@ export default function DashboardPage() {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[150px]"
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[130px]"
                     onClick={() => handleSort('customfield_10002')}
                   >
                     <div className="flex items-center gap-2 font-semibold text-gray-700">
@@ -787,7 +787,7 @@ export default function DashboardPage() {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[150px]"
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[130px]"
                     onClick={() => handleSort('customfield_10003')}
                   >
                     <div className="flex items-center gap-2 font-semibold text-gray-700">
@@ -798,7 +798,7 @@ export default function DashboardPage() {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[120px]"
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[100px]"
                     onClick={() => handleSort('customfield_10004')}
                   >
                     <div className="flex items-center gap-2 font-semibold text-gray-700">
@@ -809,7 +809,7 @@ export default function DashboardPage() {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[150px]"
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[130px]"
                     onClick={() => handleSort('customfield_10005')}
                   >
                     <div className="flex items-center gap-2 font-semibold text-gray-700">
@@ -831,7 +831,7 @@ export default function DashboardPage() {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[120px]"
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[100px]"
                     onClick={() => handleSort('customfield_10007')}
                   >
                     <div className="flex items-center gap-2 font-semibold text-gray-700">
@@ -842,7 +842,7 @@ export default function DashboardPage() {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[120px]"
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[100px]"
                     onClick={() => handleSort('customfield_10008')}
                   >
                     <div className="flex items-center gap-2 font-semibold text-gray-700">
@@ -853,7 +853,7 @@ export default function DashboardPage() {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[120px]"
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[100px]"
                     onClick={() => handleSort('customfield_10117')}
                   >
                     <div className="flex items-center gap-2 font-semibold text-gray-700">
@@ -864,7 +864,7 @@ export default function DashboardPage() {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[120px]"
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[100px]"
                     onClick={() => handleSort('customfield_10118')}
                   >
                     <div className="flex items-center gap-2 font-semibold text-gray-700">
@@ -875,7 +875,7 @@ export default function DashboardPage() {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[120px]"
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[100px]"
                     onClick={() => handleSort('customfield_10121')}
                   >
                     <div className="flex items-center gap-2 font-semibold text-gray-700">
@@ -886,7 +886,7 @@ export default function DashboardPage() {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[120px]"
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[100px]"
                     onClick={() => handleSort('customfield_10120')}
                   >
                     <div className="flex items-center gap-2 font-semibold text-gray-700">
@@ -933,7 +933,7 @@ export default function DashboardPage() {
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-3">
-                      <div className="min-w-[400px] max-w-[500px]">
+                      <div className="min-w-[300px] max-w-[600px]">
                         <button
                           onClick={() => openSummaryModal(issue)}
                           className="font-medium text-gray-900 hover:text-blue-600 hover:underline text-left transition-colors text-sm leading-relaxed block w-full"
@@ -982,7 +982,7 @@ export default function DashboardPage() {
                             className="w-6 h-6 rounded-full border border-gray-200"
                           />
                           <div className="flex flex-col">
-                            <span className="text-sm font-medium text-gray-900 truncate max-w-[120px]">
+                            <span className="text-sm font-medium text-gray-900 truncate max-w-[150px]">
                               {issue.fields.assignee?.displayName || 'Utilisateur'}
                             </span>
                             <span className="text-xs text-gray-500">Assigné</span>
@@ -1008,7 +1008,7 @@ export default function DashboardPage() {
                       />
                     </TableCell>
                     <TableCell className="px-4 py-3">
-                      <div className="min-w-[200px] max-w-[300px]">
+                      <div className="min-w-[150px] max-w-[400px]">
                         {issue.fields.description ? (
                           <button
                             onClick={() => openSummaryModal(issue)}
@@ -1042,14 +1042,14 @@ export default function DashboardPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="px-4 py-3">
-                      <div className="max-w-[200px]">
+                      <div className="max-w-[300px]">
                         <span className="text-sm text-gray-700 line-clamp-2">
                           {issue.fields.customfield_10002 || 'Non défini'}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-3">
-                      <div className="max-w-[200px]">
+                      <div className="max-w-[300px]">
                         <span className="text-sm text-gray-700 line-clamp-2">
                           {issue.fields.customfield_10003 || 'Non défini'}
                         </span>
@@ -1087,7 +1087,7 @@ export default function DashboardPage() {
                         className="w-full text-left hover:bg-blue-50 rounded-lg p-2 transition-colors duration-200"
                         title="Voir les détails de l'efficacité"
                       >
-                        <Badge className={`${issue.fields.customfield_10006 === 'EFFICACE' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'} text-xs px-3 py-1 w-full justify-center max-w-[120px] truncate`}>
+                        <Badge className={`${issue.fields.customfield_10006 === 'EFFICACE' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'} text-xs px-3 py-1 w-full justify-center max-w-[150px] truncate`}>
                           <span className="truncate">
                             {issue.fields.customfield_10006 || 'Non défini'}
                           </span>
