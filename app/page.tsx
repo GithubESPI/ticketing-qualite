@@ -15,9 +15,7 @@ import {
   ArrowRight,
   Star,
   Shield,
-  Zap,
   Globe,
-  Database,
   Settings,
   Bell,
   User,
@@ -55,12 +53,6 @@ export default function HomePage() {
     }
   ];
 
-  const stats = [
-    { label: "Projets Actifs", value: "25+", icon: <Database className="w-5 h-5" /> },
-    { label: "Issues Résolues", value: "1,200+", icon: <CheckCircle className="w-5 h-5" /> },
-    { label: "Équipes", value: "8", icon: <Users className="w-5 h-5" /> },
-    { label: "Taux de Satisfaction", value: "98%", icon: <Star className="w-5 h-5" /> }
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
@@ -154,22 +146,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 bg-white/50">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mx-auto mb-4">
-                  {stat.icon}
-                </div>
-                <div className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</div>
-                <div className="text-gray-600">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Features Section */}
       <section className="py-20">
