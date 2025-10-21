@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,8 @@ import {
   CheckCircle,
   XCircle,
   MoreHorizontal,
-  Info
+  Info,
+  BarChart3
 } from 'lucide-react';
 import DateDisplay from '../components/DateDisplay';
 import SummaryModal from '../components/SummaryModal';
@@ -110,6 +112,7 @@ interface DashboardState {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [state, setState] = useState<DashboardState>({
     issues: [],
     loading: true,
@@ -498,6 +501,15 @@ export default function DashboardPage() {
               <p className="text-gray-600 text-sm sm:text-base">Gestion des issues du projet Ticketing Qualité (Source: PowerBI API)</p>
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <Button 
+                onClick={() => router.push('/analytics')}
+                variant="outline" 
+                size="sm"
+                className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100 hover:shadow-md transition-all duration-200"
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Analytics
+              </Button>
               <Button 
                 onClick={fetchIssues} 
                 variant="outline" 

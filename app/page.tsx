@@ -1,133 +1,112 @@
 'use client';
 
-import { useState } from 'react';
-import { useTickets } from './hooks/useTickets';
-import LoadingSpinner from './components/LoadingSpinner';
-import ErrorAlert from './components/ErrorAlert';
-import StatsCards from './components/StatsCards';
-import FilterButtons from './components/FilterButtons';
-import TicketCard from './components/TicketCard';
-import EmptyState from './components/EmptyState';
-import ApiDebugger from './components/ApiDebugger';
-import ApiTester from './components/ApiTester';
-import JiraApiTester from './components/JiraApiTester';
-import ConfigurationGuide from './components/ConfigurationGuide';
-import CreateTicketForm from './components/CreateTicketForm';
-import DYSProjectView from './components/DYSProjectView';
-import { RefreshCw, Settings, Bell, User, Bug, TestTube, Zap, HelpCircle, FolderOpen } from 'lucide-react';
+import React from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { 
+  BarChart3, 
+  Users, 
+  Target, 
+  TrendingUp, 
+  CheckCircle, 
+  Clock, 
+  AlertCircle,
+  ArrowRight,
+  Star,
+  Shield,
+  Zap,
+  Globe,
+  Database,
+  Settings,
+  Bell,
+  User,
+  Menu,
+  X
+} from 'lucide-react';
 
-export default function JiraDashboard() {
-  const [filter, setFilter] = useState('all');
-  const [showDebugger, setShowDebugger] = useState(false);
-  const [showApiTester, setShowApiTester] = useState(false);
-  const [showJiraTester, setShowJiraTester] = useState(false);
-  const [showConfigGuide, setShowConfigGuide] = useState(false);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showProjects, setShowProjects] = useState(false);
-  const { tickets, loading, error, fetchTickets, getStats, getFilteredTickets } = useTickets();
+export default function HomePage() {
+  const router = useRouter();
 
-  const stats = getStats();
-  const filteredTickets = getFilteredTickets(filter);
+  const features = [
+    {
+      icon: <BarChart3 className="w-8 h-8 text-blue-600" />,
+      title: "Analytics Avancés",
+      description: "Tableaux de bord interactifs avec graphiques en temps réel pour suivre les performances de vos projets.",
+      color: "bg-blue-50 border-blue-200"
+    },
+    {
+      icon: <Users className="w-8 h-8 text-green-600" />,
+      title: "Gestion d'Équipe",
+      description: "Collaboration efficace avec assignation de tâches, suivi des responsabilités et communication centralisée.",
+      color: "bg-green-50 border-green-200"
+    },
+    {
+      icon: <Target className="w-8 h-8 text-purple-600" />,
+      title: "Suivi des Objectifs",
+      description: "KPIs personnalisés et métriques de performance pour mesurer l'efficacité de vos processus.",
+      color: "bg-purple-50 border-purple-200"
+    },
+    {
+      icon: <TrendingUp className="w-8 h-8 text-orange-600" />,
+      title: "Évolution Temporelle",
+      description: "Analyse des tendances et évolution des projets dans le temps avec des graphiques dynamiques.",
+      color: "bg-orange-50 border-orange-200"
+    }
+  ];
 
-  const handleRefresh = () => {
-    fetchTickets();
-  };
-
-  if (loading) {
-    return <LoadingSpinner />;
-  }
+  const stats = [
+    { label: "Projets Actifs", value: "25+", icon: <Database className="w-5 h-5" /> },
+    { label: "Issues Résolues", value: "1,200+", icon: <CheckCircle className="w-5 h-5" /> },
+    { label: "Équipes", value: "8", icon: <Users className="w-5 h-5" /> },
+    { label: "Taux de Satisfaction", value: "98%", icon: <Star className="w-5 h-5" /> }
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* En-tête avec navigation */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      {/* Navigation */}
+      <nav className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Tableau de bord Jira
-              </h1>
-              <p className="text-gray-600 mt-1">Gestion et suivi de vos tickets</p>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <BarChart3 className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-800">Ticketing Qualité</h1>
+                <p className="text-sm text-gray-600">Dashboard DYS</p>
+              </div>
             </div>
             
+            <div className="hidden md:flex items-center gap-4">
+              <Button 
+                variant="ghost" 
+                onClick={() => router.push('/dashboard')}
+                className="text-gray-600 hover:text-blue-600"
+              >
+                Dashboard
+              </Button>
+              <Button 
+                variant="ghost" 
+                onClick={() => router.push('/analytics')}
+                className="text-gray-600 hover:text-blue-600"
+              >
+                Analytics
+              </Button>
+              <Button 
+                variant="ghost" 
+                className="text-gray-600 hover:text-blue-600"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Paramètres
+              </Button>
+            </div>
+
             <div className="flex items-center gap-3">
-              <button
-                onClick={handleRefresh}
-                className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                title="Actualiser"
-              >
-                <RefreshCw className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setShowDebugger(!showDebugger)}
-                className={`p-2 rounded-lg transition-colors ${
-                  showDebugger 
-                    ? 'text-blue-600 bg-blue-50' 
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
-                }`}
-                title="Debug API"
-              >
-                <Bug className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setShowApiTester(true)}
-                className="p-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-                title="Tester l'API"
-              >
-                <TestTube className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setShowJiraTester(true)}
-                className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                title="Tester l'API Jira"
-              >
-                <Zap className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setShowConfigGuide(true)}
-                className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                title="Guide de configuration"
-              >
-                <HelpCircle className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setShowCreateForm(!showCreateForm)}
-                className={`p-2 rounded-lg transition-colors ${
-                  showCreateForm 
-                    ? 'text-green-600 bg-green-50' 
-                    : 'text-gray-600 hover:text-green-600 hover:bg-green-50'
-                }`}
-                title="Créer un ticket"
-              >
-                <User className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setShowProjects(!showProjects)}
-                className={`p-2 rounded-lg transition-colors ${
-                  showProjects 
-                    ? 'text-purple-600 bg-purple-50' 
-                    : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
-                }`}
-                title="Voir le projet DYS"
-              >
-                <FolderOpen className="w-5 h-5" />
-              </button>
-              <a
-                href="/dashboard"
-                className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                title="Dashboard DYS"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </a>
-              <button className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors">
-                <Bell className="w-5 h-5" />
-              </button>
-              <button className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors">
-                <Settings className="w-5 h-5" />
-              </button>
-              <div className="flex items-center gap-2 pl-3 border-l border-gray-200">
+              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-800">
+                <Bell className="w-4 h-4" />
+              </Button>
+              <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
                   <User className="w-4 h-4 text-white" />
                 </div>
@@ -136,137 +115,197 @@ export default function JiraDashboard() {
             </div>
           </div>
         </div>
-      </header>
+      </nav>
 
-      <div className="max-w-7xl mx-auto p-6">
-        {/* Message d'erreur */}
-        {error && (
-          <ErrorAlert 
-            error={`Connexion à l'API en cours... Affichage des données de démonstration.`}
-          />
-        )}
-
-        {/* Statistiques */}
-        <StatsCards stats={stats} />
-
-        {/* Filtres */}
-        <FilterButtons 
-          currentFilter={filter} 
-          onFilterChange={setFilter} 
-        />
-
-        {/* Liste des tickets */}
-        <div className="space-y-4">
-          {filteredTickets.length > 0 ? (
-            filteredTickets.map((ticket, index) => (
-              <TicketCard 
-                key={ticket.id || index} 
-                ticket={ticket} 
-                index={index} 
-              />
-            ))
-          ) : (
-            <EmptyState 
-              filter={filter} 
-              onResetFilter={() => setFilter('all')} 
-            />
-          )}
-        </div>
-
-        {/* Pied de page avec informations */}
-        <footer className="mt-12 pt-8 border-t border-gray-200">
-          <div className="flex flex-col sm:flex-row items-center justify-between text-sm text-gray-500">
-            <div className="flex items-center gap-4">
-              <span>Dernière mise à jour: {new Date().toLocaleString('fr-FR')}</span>
-              <span>•</span>
-              <span>{tickets.length} tickets au total</span>
+      {/* Hero Section */}
+      <section className="relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 py-20">
+          <div className="text-center">
+            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm font-medium mb-8">
+              <Star className="w-4 h-4" />
+              Plateforme de Gestion Qualité
             </div>
-            <div className="flex items-center gap-2 mt-2 sm:mt-0">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span>Système opérationnel</span>
+            
+            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6">
+              Ticketing Qualité
+            </h1>
+            
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+              Solution complète de gestion des issues et suivi qualité pour optimiser vos processus 
+              et améliorer la performance de vos équipes.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                size="lg" 
+                onClick={() => router.push('/dashboard')}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg"
+              >
+                Accéder au Dashboard
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => router.push('/analytics')}
+                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-4 text-lg"
+              >
+                Voir les Analytics
+                <BarChart3 className="w-5 h-5 ml-2" />
+              </Button>
             </div>
           </div>
-        </footer>
-      </div>
+        </div>
+      </section>
 
-      {/* Debugger API */}
-      <ApiDebugger 
-        isVisible={showDebugger} 
-        onToggle={() => setShowDebugger(false)} 
-      />
-
-      {/* Testeur API */}
-      <ApiTester 
-        isVisible={showApiTester} 
-        onClose={() => setShowApiTester(false)} 
-      />
-
-      {/* Testeur API Jira */}
-      <JiraApiTester 
-        isVisible={showJiraTester} 
-        onClose={() => setShowJiraTester(false)} 
-      />
-
-      {/* Guide de configuration */}
-      <ConfigurationGuide 
-        isVisible={showConfigGuide} 
-        onClose={() => setShowConfigGuide(false)} 
-      />
-
-      {/* Formulaire de création de ticket */}
-      {showCreateForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-gray-800">Créer un ticket Jira</h2>
-                <button
-                  onClick={() => setShowCreateForm(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+      {/* Stats Section */}
+      <section className="py-16 bg-white/50">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mx-auto mb-4">
+                  {stat.icon}
+                </div>
+                <div className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</div>
+                <div className="text-gray-600">{stat.label}</div>
               </div>
-              <CreateTicketForm 
-                onTicketCreated={(ticketKey) => {
-                  console.log('Ticket créé:', ticketKey);
-                  setShowCreateForm(false);
-                  // Actualiser la liste des tickets
-                  fetchTickets();
-                }}
-              />
-            </div>
+            ))}
           </div>
         </div>
-      )}
+      </section>
 
-      {/* Liste des projets */}
-      {showProjects && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-gray-800">Projet DYS - Ticketing Qualité</h2>
-                <button
-                  onClick={() => setShowProjects(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <DYSProjectView 
-                onIssueSelect={(issue) => {
-                  console.log('Issue sélectionné:', issue);
-                }}
-              />
+      {/* Features Section */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Fonctionnalités Principales
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Découvrez les outils puissants qui transforment votre gestion de la qualité
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <Card key={index} className={`${feature.color} border-2 hover:shadow-lg transition-all duration-300`}>
+                <CardHeader>
+                  <div className="flex items-center gap-3 mb-4">
+                    {feature.icon}
+                    <CardTitle className="text-lg font-semibold text-gray-900">
+                      {feature.title}
+                    </CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-gray-700">
+                    {feature.description}
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <div className="text-white">
+            <h2 className="text-4xl font-bold mb-6">
+              Prêt à Optimiser Votre Gestion Qualité ?
+            </h2>
+            <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+              Rejoignez des centaines d'équipes qui font confiance à notre plateforme 
+              pour améliorer leurs processus et leurs performances.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                size="lg" 
+                onClick={() => router.push('/dashboard')}
+                className="bg-white text-blue-600 hover:bg-gray-50 px-8 py-4 text-lg"
+              >
+                Commencer Maintenant
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => router.push('/analytics')}
+                className="border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 text-lg"
+              >
+                Explorer les Analytics
+                <BarChart3 className="w-5 h-5 ml-2" />
+              </Button>
             </div>
           </div>
         </div>
-      )}
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <BarChart3 className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold">Ticketing Qualité</h3>
+                  <p className="text-sm text-gray-400">Dashboard DYS</p>
+                </div>
+              </div>
+              <p className="text-gray-400 text-sm">
+                Solution complète de gestion des issues et suivi qualité pour optimiser vos processus.
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-4">Navigation</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><button onClick={() => router.push('/dashboard')} className="hover:text-white transition-colors">Dashboard</button></li>
+                <li><button onClick={() => router.push('/analytics')} className="hover:text-white transition-colors">Analytics</button></li>
+                <li><button className="hover:text-white transition-colors">Projets</button></li>
+                <li><button className="hover:text-white transition-colors">Équipes</button></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-4">Fonctionnalités</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><button className="hover:text-white transition-colors">Gestion des Issues</button></li>
+                <li><button className="hover:text-white transition-colors">Analytics Avancés</button></li>
+                <li><button className="hover:text-white transition-colors">Rapports</button></li>
+                <li><button className="hover:text-white transition-colors">Intégrations</button></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-4">Support</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><button className="hover:text-white transition-colors">Documentation</button></li>
+                <li><button className="hover:text-white transition-colors">Aide</button></li>
+                <li><button className="hover:text-white transition-colors">Contact</button></li>
+                <li><button className="hover:text-white transition-colors">Statut</button></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col sm:flex-row items-center justify-between">
+            <p className="text-gray-400 text-sm">
+              © 2024 Ticketing Qualité. Tous droits réservés.
+            </p>
+            <div className="flex items-center gap-4 mt-4 sm:mt-0">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-gray-400">Système opérationnel</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
