@@ -24,6 +24,7 @@ import {
   Info,
   BarChart3
 } from 'lucide-react';
+import AuthHeader from '@/components/AuthHeader';
 import DateDisplay from '../components/DateDisplay';
 import SummaryModal from '../components/SummaryModal';
 import EfficiencyModal from '../components/EfficiencyModal';
@@ -510,6 +511,7 @@ export default function DashboardPage() {
                 <BarChart3 className="w-4 h-4 mr-2" />
                 Analytics
               </Button>
+              <AuthHeader />
               <Button 
                 onClick={fetchIssues} 
                 variant="outline" 

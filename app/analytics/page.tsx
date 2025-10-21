@@ -22,6 +22,7 @@ import {
   Area,
   AreaChart
 } from 'recharts';
+import AuthHeader from '@/components/AuthHeader';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
@@ -704,10 +705,13 @@ export default function AnalyticsPage() {
                </div>
                <p className="text-gray-600">Analyse des issues Jira - {filteredIssues.length} issues filtrés</p>
              </div>
-             <Button onClick={fetchIssues} className="bg-blue-600 hover:bg-blue-700">
-               <RefreshCw className="w-4 h-4 mr-2" />
-               Actualiser
-             </Button>
+             <div className="flex items-center gap-3">
+               <Button onClick={fetchIssues} className="bg-blue-600 hover:bg-blue-700">
+                 <RefreshCw className="w-4 h-4 mr-2" />
+                 Actualiser
+               </Button>
+               <AuthHeader />
+             </div>
            </div>
 
            {/* KPIs Cards */}
