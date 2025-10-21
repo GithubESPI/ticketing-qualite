@@ -55,7 +55,8 @@ import {
   ArrowLeft,
   X,
   CalendarIcon,
-  Settings
+  Settings,
+  LogOut
 } from 'lucide-react';
 
 interface JiraIssue {
@@ -906,38 +907,54 @@ export default function AnalyticsPage() {
         {/* Contenu principal */}
         <div className="w-full p-6 space-y-6 lg:ml-80 h-full overflow-y-auto">
            {/* En-tête */}
-           <div className="flex items-center justify-between">
-             <div>
-               <div className="flex items-center gap-4 mb-2">
-                 <Button 
-                   onClick={() => router.push('/dashboard')}
-                   variant="outline" 
-                   size="sm"
-                   className="bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 hover:shadow-md transition-all duration-200"
-                 >
-                   <ArrowLeft className="w-4 h-4 mr-2" />
-                   Retour Dashboard
-                 </Button>
+           <div className="flex items-center justify-between w-full">
+             {/* Section gauche */}
+             <div className="flex items-center gap-4">
+               <Button 
+                 onClick={() => router.push('/dashboard')}
+                 variant="outline" 
+                 size="sm"
+                 className="bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 hover:shadow-md transition-all duration-200"
+               >
+                 <ArrowLeft className="w-4 h-4 mr-2" />
+                 Retour Dashboard
+               </Button>
+               <div>
                  <h2 className="text-2xl font-bold text-gray-800">Tableau de bord Analytics</h2>
-                 {/* Bouton sidebar mobile */}
-                 <Button
-                   onClick={toggleSidebar}
-                   variant="outline"
-                   size="sm"
-                   className="lg:hidden bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
-                 >
-                   <Filter className="w-4 h-4 mr-2" />
-                   Filtres
-                 </Button>
+                 <p className="text-gray-600">Analyse des issues Jira - {filteredIssues.length} issues filtrés</p>
                </div>
-               <p className="text-gray-600">Analyse des issues Jira - {filteredIssues.length} issues filtrés</p>
+               {/* Bouton sidebar mobile */}
+               <Button
+                 onClick={toggleSidebar}
+                 variant="outline"
+                 size="sm"
+                 className="lg:hidden bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
+               >
+                 <Filter className="w-4 h-4 mr-2" />
+                 Filtres
+               </Button>
              </div>
+             
+             {/* Section centre - Profil et déconnexion */}
+             <div className="flex items-center gap-3">
+               <AuthHeader />
+               <Button 
+                 onClick={() => window.location.href = '/api/auth/signout'}
+                 variant="outline"
+                 size="sm"
+                 className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100 hover:border-red-300"
+               >
+                 <LogOut className="w-4 h-4 mr-2" />
+                 Déconnexion
+               </Button>
+             </div>
+             
+             {/* Section droite */}
              <div className="flex items-center gap-3">
                <Button onClick={fetchIssues} className="bg-blue-600 hover:bg-blue-700">
                  <RefreshCw className="w-4 h-4 mr-2" />
                  Actualiser
                </Button>
-               <AuthHeader />
              </div>
            </div>
 
