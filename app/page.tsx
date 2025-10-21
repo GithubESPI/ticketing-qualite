@@ -144,7 +144,7 @@ export default function HomePage() {
                 size="lg" 
                 variant="outline"
                 onClick={() => router.push('/analytics')}
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-4 text-lg"
+                className="border-gray-300 text-white hover:bg-white hover:text-blue-600 px-8 py-4 text-lg"
               >
                 Voir les Analytics
                 <BarChart3 className="w-5 h-5 ml-2" />
