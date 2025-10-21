@@ -939,7 +939,7 @@ export default function AnalyticsPage() {
              <div className="flex items-center gap-3">
                <AuthHeader />
                <Button 
-                 onClick={() => window.location.href = '/api/auth/signout'}
+                 onClick={() => window.location.href = '/api/auth/signout?callbackUrl=/'}
                  variant="outline"
                  size="sm"
                  className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100 hover:border-red-300"
