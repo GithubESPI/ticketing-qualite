@@ -23,6 +23,8 @@ import {
   AreaChart
 } from 'recharts';
 import AuthHeader from '@/components/AuthHeader';
+import AuthGuard from '@/components/AuthGuard';
+import FilterConfig from '@/components/FilterConfig';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
@@ -52,7 +54,8 @@ import {
   RefreshCw,
   ArrowLeft,
   X,
-  CalendarIcon
+  CalendarIcon,
+  Settings
 } from 'lucide-react';
 
 interface JiraIssue {
@@ -94,12 +97,28 @@ interface AnalyticsState {
   statusFilter: string;
   priorityFilter: string;
   assigneeFilter: string;
+  processusFilter: string;
+  campusFilter: string;
+  userTypeFilter: string;
   dateRange: string;
   startDate: Date | undefined;
   endDate: Date | undefined;
   showKpiModal: boolean;
   selectedKpiType: string;
   selectedKpiData: JiraIssue[];
+  showFilterConfig: boolean;
+  showSidebar: boolean;
+  // Filtres visibles dans la sidebar
+  visibleFilters: {
+    status: boolean;
+    priority: boolean;
+    assignee: boolean;
+    processus: boolean;
+    campus: boolean;
+    userType: boolean;
+    dateRange: boolean;
+    customDate: boolean;
+  };
 }
 
 const chartConfig = {
@@ -144,12 +163,27 @@ export default function AnalyticsPage() {
     statusFilter: 'all',
     priorityFilter: 'all',
     assigneeFilter: 'all',
+    processusFilter: 'all',
+    campusFilter: 'all',
+    userTypeFilter: 'all',
     dateRange: '30',
     startDate: undefined,
     endDate: undefined,
     showKpiModal: false,
     selectedKpiType: '',
-    selectedKpiData: []
+    selectedKpiData: [],
+    showFilterConfig: false,
+    showSidebar: false,
+    visibleFilters: {
+      status: true,
+      priority: true,
+      assignee: false,
+      processus: false,
+      campus: false,
+      userType: false,
+      dateRange: true,
+      customDate: false
+    }
   });
 
   // Charger les données
@@ -187,6 +221,18 @@ export default function AnalyticsPage() {
 
     if (state.assigneeFilter !== 'all') {
       filtered = filtered.filter(issue => issue.fields.assignee?.displayName === state.assigneeFilter);
+    }
+
+    if (state.processusFilter !== 'all') {
+      filtered = filtered.filter(issue => issue.fields.customfield_10008 === state.processusFilter);
+    }
+
+    if (state.campusFilter !== 'all') {
+      filtered = filtered.filter(issue => issue.fields.customfield_10117 === state.campusFilter);
+    }
+
+    if (state.userTypeFilter !== 'all') {
+      filtered = filtered.filter(issue => issue.fields.customfield_10121 === state.userTypeFilter);
     }
 
     // Filtre par date (dateRange)
@@ -338,6 +384,54 @@ export default function AnalyticsPage() {
     }));
   };
 
+  const getIssuesByProcessus = () => {
+    const processusCounts = filteredIssues.reduce((acc, issue) => {
+      const processus = issue.fields.customfield_10008 || 'Non défini';
+      acc[processus] = (acc[processus] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Si pas de données, créer des données d'exemple
+    if (Object.keys(processusCounts).length === 0) {
+      return [
+        { processus: 'Processus A', count: 12, fill: COLORS[0] },
+        { processus: 'Processus B', count: 8, fill: COLORS[1] },
+        { processus: 'Processus C', count: 5, fill: COLORS[2] },
+        { processus: 'Processus D', count: 3, fill: COLORS[3] }
+      ];
+    }
+
+    return Object.entries(processusCounts).map(([processus, count], index) => ({
+      processus,
+      count,
+      fill: COLORS[index % COLORS.length]
+    }));
+  };
+
+  const getIssuesByUserType = () => {
+    const userTypeCounts = filteredIssues.reduce((acc, issue) => {
+      const userType = issue.fields.customfield_10121 || 'Non défini';
+      acc[userType] = (acc[userType] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Si pas de données, créer des données d'exemple
+    if (Object.keys(userTypeCounts).length === 0) {
+      return [
+        { userType: 'Étudiant', count: 15, fill: COLORS[0] },
+        { userType: 'Enseignant', count: 8, fill: COLORS[1] },
+        { userType: 'Administratif', count: 5, fill: COLORS[2] },
+        { userType: 'Autre', count: 3, fill: COLORS[3] }
+      ];
+    }
+
+    return Object.entries(userTypeCounts).map(([userType, count], index) => ({
+      userType,
+      count,
+      fill: COLORS[index % COLORS.length]
+    }));
+  };
+
   // KPIs basés sur tous les statuts
   const totalIssues = filteredIssues.length;
   const openIssues = filteredIssues.filter(issue => issue.fields.status?.name === 'Ouvert').length;
@@ -393,6 +487,31 @@ export default function AnalyticsPage() {
     }));
   };
 
+  // Fonction pour basculer la visibilité d'un filtre
+  const toggleFilterVisibility = (filterKey: keyof typeof state.visibleFilters) => {
+    setState(prev => ({
+      ...prev,
+      visibleFilters: {
+        ...prev.visibleFilters,
+        [filterKey]: !prev.visibleFilters[filterKey]
+      }
+    }));
+  };
+
+  // Fonction pour ouvrir/fermer la configuration des filtres
+  const openFilterConfig = () => {
+    setState(prev => ({ ...prev, showFilterConfig: true }));
+  };
+
+  const closeFilterConfig = () => {
+    setState(prev => ({ ...prev, showFilterConfig: false }));
+  };
+
+  // Fonction pour basculer la sidebar mobile
+  const toggleSidebar = () => {
+    setState(prev => ({ ...prev, showSidebar: !prev.showSidebar }));
+  };
+
   if (state.loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
@@ -420,6 +539,7 @@ export default function AnalyticsPage() {
   }
 
   return (
+    <AuthGuard>
      <>
        <style jsx global>{`
          .calendar-container [data-radix-popper-content-wrapper] {
@@ -457,158 +577,255 @@ export default function AnalyticsPage() {
            font-weight: 600;
          }
        `}</style>
-       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-         <div className={`flex transition-all duration-500 ease-in-out ${state.showKpiModal ? 'blur-sm scale-[0.98]' : 'blur-0 scale-100'}`}>
-        {/* Sidebar */}
-        <div className="w-80 bg-white border-r border-gray-200 p-6 space-y-6">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <BarChart3 className="w-6 h-6 text-blue-600" />
+       <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 overflow-hidden">
+         {/* Overlay pour mobile */}
+         {state.showSidebar && (
+           <div 
+             className="fixed inset-0 bg-black bg-opacity-50 z-10 lg:hidden"
+             onClick={() => setState(prev => ({ ...prev, showSidebar: false }))}
+           />
+         )}
+         
+         {/* Sidebar - Complètement indépendante */}
+         <div className={`w-80 bg-white border-r border-gray-200 p-6 space-y-6 fixed left-0 top-0 h-screen overflow-y-auto z-20 shadow-lg transition-transform duration-300 ${
+           state.showSidebar ? 'translate-x-0' : '-translate-x-full'
+         } lg:translate-x-0 lg:block`}>
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <BarChart3 className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-800">Analytics</h1>
+                <p className="text-sm text-gray-600">Tableaux de bord</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-800">Analytics</h1>
-              <p className="text-sm text-gray-600">Tableaux de bord</p>
-            </div>
+            {/* Bouton fermer sidebar mobile */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setState(prev => ({ ...prev, showSidebar: false }))}
+              className="lg:hidden text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-4 h-4" />
+            </Button>
           </div>
 
           {/* Filtres */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Filter className="w-4 h-4 text-gray-600" />
-              <h3 className="font-semibold text-gray-800">Filtres</h3>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-gray-600" />
+                <h3 className="font-semibold text-gray-800">Filtres</h3>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={openFilterConfig}
+                className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+              >
+                <Settings className="w-4 h-4 mr-1" />
+                Config
+              </Button>
             </div>
 
             {/* Filtre par statut */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Statut</label>
-               <Select value={state.statusFilter} onValueChange={(value) => setState(prev => ({ ...prev, statusFilter: value }))}>
-                 <SelectTrigger className="bg-white border-gray-300 text-gray-900">
-                   <SelectValue placeholder="Tous les statuts" />
-                 </SelectTrigger>
-                <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
-                  <SelectItem value="all" className="text-gray-900 hover:bg-blue-50">Tous les statuts</SelectItem>
-                  {Array.from(new Set(state.issues.map(issue => issue.fields.status?.name).filter(Boolean))).map(status => (
-                    <SelectItem key={status || ''} value={status || ''} className="text-gray-900 hover:bg-blue-50">{status || ''}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {state.visibleFilters.status && (
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Statut</label>
+                 <Select value={state.statusFilter} onValueChange={(value) => setState(prev => ({ ...prev, statusFilter: value }))}>
+                   <SelectTrigger className="bg-white border-gray-300 text-gray-900">
+                     <SelectValue placeholder="Tous les statuts" />
+                   </SelectTrigger>
+                  <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
+                    <SelectItem value="all" className="text-gray-900 hover:bg-blue-50">Tous les statuts</SelectItem>
+                    {Array.from(new Set(state.issues.map(issue => issue.fields.status?.name).filter(Boolean))).map(status => (
+                      <SelectItem key={status || ''} value={status || ''} className="text-gray-900 hover:bg-blue-50">{status || ''}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Filtre par priorité */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Priorité</label>
-               <Select value={state.priorityFilter} onValueChange={(value) => setState(prev => ({ ...prev, priorityFilter: value }))}>
-                 <SelectTrigger className="bg-white border-gray-300 text-gray-900">
-                   <SelectValue placeholder="Toutes les priorités" />
-                 </SelectTrigger>
-                <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
-                  <SelectItem value="all" className="text-gray-900 hover:bg-blue-50">Toutes les priorités</SelectItem>
-                  {Array.from(new Set(state.issues.map(issue => issue.fields.priority?.name).filter(Boolean))).map(priority => (
-                    <SelectItem key={priority || ''} value={priority || ''} className="text-gray-900 hover:bg-blue-50">{priority || ''}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {state.visibleFilters.priority && (
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Priorité</label>
+                 <Select value={state.priorityFilter} onValueChange={(value) => setState(prev => ({ ...prev, priorityFilter: value }))}>
+                   <SelectTrigger className="bg-white border-gray-300 text-gray-900">
+                     <SelectValue placeholder="Toutes les priorités" />
+                   </SelectTrigger>
+                  <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
+                    <SelectItem value="all" className="text-gray-900 hover:bg-blue-50">Toutes les priorités</SelectItem>
+                    {Array.from(new Set(state.issues.map(issue => issue.fields.priority?.name).filter(Boolean))).map(priority => (
+                      <SelectItem key={priority || ''} value={priority || ''} className="text-gray-900 hover:bg-blue-50">{priority || ''}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Filtre par assigné */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Assigné</label>
-               <Select value={state.assigneeFilter} onValueChange={(value) => setState(prev => ({ ...prev, assigneeFilter: value }))}>
-                 <SelectTrigger className="bg-white border-gray-300 text-gray-900">
-                   <SelectValue placeholder="Tous les assignés" />
-                 </SelectTrigger>
-                <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
-                  <SelectItem value="all" className="text-gray-900 hover:bg-blue-50">Tous les assignés</SelectItem>
-                  {Array.from(new Set(state.issues.map(issue => issue.fields.assignee?.displayName).filter(Boolean))).map(assignee => (
-                    <SelectItem key={assignee || ''} value={assignee || ''} className="text-gray-900 hover:bg-blue-50">{assignee || ''}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {state.visibleFilters.assignee && (
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Assigné</label>
+                 <Select value={state.assigneeFilter} onValueChange={(value) => setState(prev => ({ ...prev, assigneeFilter: value }))}>
+                   <SelectTrigger className="bg-white border-gray-300 text-gray-900">
+                     <SelectValue placeholder="Tous les assignés" />
+                   </SelectTrigger>
+                  <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
+                    <SelectItem value="all" className="text-gray-900 hover:bg-blue-50">Tous les assignés</SelectItem>
+                    {Array.from(new Set(state.issues.map(issue => issue.fields.assignee?.displayName).filter(Boolean))).map(assignee => (
+                      <SelectItem key={assignee || ''} value={assignee || ''} className="text-gray-900 hover:bg-blue-50">{assignee || ''}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Filtre par processus */}
+            {state.visibleFilters.processus && (
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Processus</label>
+                 <Select value={state.processusFilter} onValueChange={(value) => setState(prev => ({ ...prev, processusFilter: value }))}>
+                   <SelectTrigger className="bg-white border-gray-300 text-gray-900">
+                     <SelectValue placeholder="Tous les processus" />
+                   </SelectTrigger>
+                  <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
+                    <SelectItem value="all" className="text-gray-900 hover:bg-blue-50">Tous les processus</SelectItem>
+                    {Array.from(new Set(state.issues.map(issue => issue.fields.customfield_10008).filter(Boolean))).map(processus => (
+                      <SelectItem key={processus || ''} value={processus || ''} className="text-gray-900 hover:bg-blue-50">{processus || ''}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Filtre par campus */}
+            {state.visibleFilters.campus && (
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Campus</label>
+                 <Select value={state.campusFilter} onValueChange={(value) => setState(prev => ({ ...prev, campusFilter: value }))}>
+                   <SelectTrigger className="bg-white border-gray-300 text-gray-900">
+                     <SelectValue placeholder="Tous les campus" />
+                   </SelectTrigger>
+                  <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
+                    <SelectItem value="all" className="text-gray-900 hover:bg-blue-50">Tous les campus</SelectItem>
+                    {Array.from(new Set(state.issues.map(issue => issue.fields.customfield_10117).filter(Boolean))).map(campus => (
+                      <SelectItem key={campus || ''} value={campus || ''} className="text-gray-900 hover:bg-blue-50">{campus || ''}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Filtre par type d'utilisateur */}
+            {state.visibleFilters.userType && (
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Type d'utilisateur</label>
+                 <Select value={state.userTypeFilter} onValueChange={(value) => setState(prev => ({ ...prev, userTypeFilter: value }))}>
+                   <SelectTrigger className="bg-white border-gray-300 text-gray-900">
+                     <SelectValue placeholder="Tous les types" />
+                   </SelectTrigger>
+                  <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
+                    <SelectItem value="all" className="text-gray-900 hover:bg-blue-50">Tous les types</SelectItem>
+                    {Array.from(new Set(state.issues.map(issue => issue.fields.customfield_10121).filter(Boolean))).map(userType => (
+                      <SelectItem key={userType || ''} value={userType || ''} className="text-gray-900 hover:bg-blue-50">{userType || ''}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Filtre par période */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Période</label>
-               <Select value={state.dateRange} onValueChange={(value) => setState(prev => ({ ...prev, dateRange: value }))}>
-                 <SelectTrigger className="bg-white border-gray-300 text-gray-900">
-                   <SelectValue placeholder="Sélectionner une période" />
-                 </SelectTrigger>
-                <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
-                  <SelectItem value="all" className="text-gray-900 hover:bg-blue-50">Toutes les périodes</SelectItem>
-                  <SelectItem value="7" className="text-gray-900 hover:bg-blue-50">7 derniers jours</SelectItem>
-                  <SelectItem value="30" className="text-gray-900 hover:bg-blue-50">30 derniers jours</SelectItem>
-                  <SelectItem value="90" className="text-gray-900 hover:bg-blue-50">3 derniers mois</SelectItem>
-                  <SelectItem value="365" className="text-gray-900 hover:bg-blue-50">12 derniers mois</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {state.visibleFilters.dateRange && (
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Période</label>
+                 <Select value={state.dateRange} onValueChange={(value) => setState(prev => ({ ...prev, dateRange: value }))}>
+                   <SelectTrigger className="bg-white border-gray-300 text-gray-900">
+                     <SelectValue placeholder="Sélectionner une période" />
+                   </SelectTrigger>
+                  <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
+                    <SelectItem value="all" className="text-gray-900 hover:bg-blue-50">Toutes les périodes</SelectItem>
+                    <SelectItem value="7" className="text-gray-900 hover:bg-blue-50">7 derniers jours</SelectItem>
+                    <SelectItem value="30" className="text-gray-900 hover:bg-blue-50">30 derniers jours</SelectItem>
+                    <SelectItem value="90" className="text-gray-900 hover:bg-blue-50">3 derniers mois</SelectItem>
+                    <SelectItem value="365" className="text-gray-900 hover:bg-blue-50">12 derniers mois</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Filtre par date personnalisée */}
-            <div>
-              <label className="text-sm font-medium text-gray-900 mb-2 block">Date de début</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left font-normal bg-white border-2 border-gray-400 text-gray-900 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4 text-gray-700" />
-                    {state.startDate ? format(state.startDate, "dd/MM/yyyy", { locale: fr }) : "Sélectionner une date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 z-[200] bg-white border-2 border-gray-200 shadow-xl calendar-container" align="start">
-                  <div className="bg-white p-3">
-                    <CalendarComponent
-                      mode="single"
-                      selected={state.startDate}
-                      onSelect={(date) => setState(prev => ({ ...prev, startDate: date }))}
-                      initialFocus
-                      className="bg-white text-gray-900 [&_*]:text-gray-900 [&_*]:border-gray-300"
-                    />
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
+            {state.visibleFilters.customDate && (
+              <>
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-2 block">Date de début</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal bg-white border-2 border-gray-400 text-gray-900 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4 text-gray-700" />
+                        {state.startDate ? format(state.startDate, "dd/MM/yyyy", { locale: fr }) : "Sélectionner une date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 z-[200] bg-white border-2 border-gray-200 shadow-xl calendar-container" align="start">
+                      <div className="bg-white p-3">
+                        <CalendarComponent
+                          mode="single"
+                          selected={state.startDate}
+                          onSelect={(date) => setState(prev => ({ ...prev, startDate: date }))}
+                          initialFocus
+                          className="bg-white text-gray-900 [&_*]:text-gray-900 [&_*]:border-gray-300"
+                        />
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
 
-            <div>
-              <label className="text-sm font-medium text-gray-900 mb-2 block">Date de fin</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left font-normal bg-white border-2 border-gray-400 text-gray-900 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4 text-gray-700" />
-                    {state.endDate ? format(state.endDate, "dd/MM/yyyy", { locale: fr }) : "Sélectionner une date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 z-[200] bg-white border-2 border-gray-200 shadow-xl calendar-container" align="start">
-                  <div className="bg-white p-3">
-                    <CalendarComponent
-                      mode="single"
-                      selected={state.endDate}
-                      onSelect={(date) => setState(prev => ({ ...prev, endDate: date }))}
-                      initialFocus
-                      className="bg-white text-gray-900 [&_*]:text-gray-900 [&_*]:border-gray-300"
-                    />
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-2 block">Date de fin</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal bg-white border-2 border-gray-400 text-gray-900 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4 text-gray-700" />
+                        {state.endDate ? format(state.endDate, "dd/MM/yyyy", { locale: fr }) : "Sélectionner une date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 z-[200] bg-white border-2 border-gray-200 shadow-xl calendar-container" align="start">
+                      <div className="bg-white p-3">
+                        <CalendarComponent
+                          mode="single"
+                          selected={state.endDate}
+                          onSelect={(date) => setState(prev => ({ ...prev, endDate: date }))}
+                          initialFocus
+                          className="bg-white text-gray-900 [&_*]:text-gray-900 [&_*]:border-gray-300"
+                        />
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
 
-            {/* Bouton pour effacer les filtres de date */}
-            {(state.startDate || state.endDate) && (
-              <div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setState(prev => ({ ...prev, startDate: undefined, endDate: undefined }))}
-                  className="w-full bg-red-50 border-2 border-red-300 text-red-700 hover:bg-red-100 hover:border-red-400 transition-all duration-200"
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Effacer les dates
-                </Button>
-              </div>
+                {/* Bouton pour effacer les filtres de date */}
+                {(state.startDate || state.endDate) && (
+                  <div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setState(prev => ({ ...prev, startDate: undefined, endDate: undefined }))}
+                      className="w-full bg-red-50 border-2 border-red-300 text-red-700 hover:bg-red-100 hover:border-red-400 transition-all duration-200"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Effacer les dates
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -687,7 +904,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Contenu principal */}
-        <div className="flex-1 p-6 space-y-6">
+        <div className="w-full p-6 space-y-6 lg:ml-80 h-full overflow-y-auto">
            {/* En-tête */}
            <div className="flex items-center justify-between">
              <div>
@@ -702,6 +919,16 @@ export default function AnalyticsPage() {
                    Retour Dashboard
                  </Button>
                  <h2 className="text-2xl font-bold text-gray-800">Tableau de bord Analytics</h2>
+                 {/* Bouton sidebar mobile */}
+                 <Button
+                   onClick={toggleSidebar}
+                   variant="outline"
+                   size="sm"
+                   className="lg:hidden bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
+                 >
+                   <Filter className="w-4 h-4 mr-2" />
+                   Filtres
+                 </Button>
                </div>
                <p className="text-gray-600">Analyse des issues Jira - {filteredIssues.length} issues filtrés</p>
              </div>
@@ -849,6 +1076,36 @@ export default function AnalyticsPage() {
               </CardContent>
             </Card>
 
+            {/* Graphique en secteurs - Issues par Processus */}
+            <Card className="bg-white/80 backdrop-blur-sm border-gray-200 hover:shadow-lg transition-all duration-300">
+              <CardHeader>
+                 <CardTitle className="flex items-center gap-2 text-gray-900">
+                   <Activity className="w-5 h-5 text-purple-600" />
+                   Issues par Processus
+                 </CardTitle>
+                <CardDescription className="text-gray-600">Distribution des issues par processus</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig} className="h-[300px]">
+                  <PieChart>
+                    <Pie
+                      data={getIssuesByProcessus()}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      dataKey="count"
+                      label={({ processus, count }) => `${processus}: ${count}`}
+                    >
+                      {getIssuesByProcessus().map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                  </PieChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+
             {/* Graphique linéaire - Évolution temporelle */}
             <Card className="bg-white/80 backdrop-blur-sm border-gray-200 hover:shadow-lg transition-all duration-300">
               <CardHeader>
@@ -896,6 +1153,58 @@ export default function AnalyticsPage() {
                     <ChartTooltip content={<ChartTooltipContent />} />
                     <Bar dataKey="count" fill="var(--color-count)" radius={4} />
                   </BarChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+
+            {/* Graphique en barres - Issues par Processus */}
+            <Card className="bg-white/80 backdrop-blur-sm border-gray-200 hover:shadow-lg transition-all duration-300">
+              <CardHeader>
+                 <CardTitle className="flex items-center gap-2 text-gray-900">
+                   <Activity className="w-5 h-5 text-purple-600" />
+                   Issues par Processus
+                 </CardTitle>
+                <CardDescription className="text-gray-600">Répartition des issues par processus</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig} className="h-[300px]">
+                  <BarChart data={getIssuesByProcessus()}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="processus" />
+                    <YAxis />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="count" fill="var(--color-count)" radius={4} />
+                  </BarChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+
+            {/* Graphique en secteurs - Issues par Type d'utilisateur */}
+            <Card className="bg-white/80 backdrop-blur-sm border-gray-200 hover:shadow-lg transition-all duration-300">
+              <CardHeader>
+                 <CardTitle className="flex items-center gap-2 text-gray-900">
+                   <Users className="w-5 h-5 text-indigo-600" />
+                   Issues par Type d'utilisateur
+                 </CardTitle>
+                <CardDescription className="text-gray-600">Distribution des issues par type d'utilisateur</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig} className="h-[300px]">
+                  <PieChart>
+                    <Pie
+                      data={getIssuesByUserType()}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      dataKey="count"
+                      label={({ userType, count }) => `${userType}: ${count}`}
+                    >
+                      {getIssuesByUserType().map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                  </PieChart>
                 </ChartContainer>
               </CardContent>
             </Card>
@@ -1013,7 +1322,16 @@ export default function AnalyticsPage() {
            </div>
          </div>
        )}
-     </div>
+
+       {/* Configuration des filtres */}
+       {state.showFilterConfig && (
+         <FilterConfig
+           visibleFilters={state.visibleFilters}
+           onToggleFilter={toggleFilterVisibility}
+           onClose={closeFilterConfig}
+         />
+       )}
      </>
+    </AuthGuard>
    );
  }

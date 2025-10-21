@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axiosInstance from '../../axiosInstance';
+import { isAuthenticated } from '@/lib/auth-utils';
 
 // Fonction pour extraire le texte des documents Jira structurés
 function extractTextFromJiraDoc(doc: any): string {
@@ -24,6 +25,15 @@ function extractTextFromJiraDoc(doc: any): string {
 
 export async function GET(request: NextRequest) {
   try {
+    // Vérifier l'authentification
+    const authenticated = await isAuthenticated(request);
+    if (!authenticated) {
+      return NextResponse.json(
+        { error: 'Non autorisé. Authentification requise.' },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const maxResults = parseInt(searchParams.get('maxResults') || '100');
 

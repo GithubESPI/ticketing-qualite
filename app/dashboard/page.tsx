@@ -25,6 +25,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import AuthHeader from '@/components/AuthHeader';
+import AuthGuard from '@/components/AuthGuard';
 import DateDisplay from '../components/DateDisplay';
 import SummaryModal from '../components/SummaryModal';
 import EfficiencyModal from '../components/EfficiencyModal';
@@ -490,16 +491,17 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <div className="w-full p-4 sm:p-6">
+    <AuthGuard>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        <div className="w-full p-4 sm:p-6">
         {/* En-tête */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="space-y-2">
               <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                Dashboard DYS - PowerBI
+                Dashboard Ticketing Qualité
               </h1>
-              <p className="text-gray-600 text-sm sm:text-base">Gestion des issues du projet Ticketing Qualité (Source: PowerBI API)</p>
+              <p className="text-gray-600 text-sm sm:text-base">Gestion des issues du projet Ticketing Qualité (Source: Jira API)</p>
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <Button 
@@ -1413,6 +1415,7 @@ export default function DashboardPage() {
         onClose={closeEfficiencyModal}
         issue={state.selectedEfficiencyIssue}
       />
-    </div>
+      </div>
+    </AuthGuard>
   );
 }
