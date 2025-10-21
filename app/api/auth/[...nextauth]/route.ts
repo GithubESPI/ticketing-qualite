@@ -16,12 +16,18 @@ const handler = NextAuth({
         token.accessToken = account.access_token;
         token.idToken = account.id_token;
       }
+      if (profile) {
+        token.picture = profile.picture;
+      }
       return token;
     },
     async session({ session, token }) {
       // Send properties to the client, like an access_token and user id from a provider.
       session.accessToken = token.accessToken as string;
       session.user.id = token.sub as string;
+      if (token.picture) {
+        session.user.image = token.picture as string;
+      }
       return session;
     },
     async signIn({ user, account, profile }) {
