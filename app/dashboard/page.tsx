@@ -64,14 +64,25 @@ interface JiraIssue {
       key: string;
       name: string;
     };
-    // Champs personnalisés identifiés depuis PowerBI
-    customfield_10001?: string; // Action clôturée
-    customfield_10002?: string; // Action corrective
-    customfield_10003?: string; // Action curative
-    customfield_10004?: string; // Date de constatation
-    customfield_10005?: string; // Date effective de réalisation
-    customfield_10006?: string; // Efficacité de l'action
-    customfield_10007?: string; // Entité Origine
+    // Champs personnalisés identifiés depuis Jira
+    customfield_10001?: string; // Action clôturée - non disponible
+    customfield_10002?: string; // Action corrective - non disponible
+    customfield_10003?: string; // Action curative - non disponible
+    customfield_10004?: string; // Date de constatation - non disponible
+    customfield_10005?: string; // Date effective de réalisation - non disponible
+    customfield_10006?: string; // Efficacité de l'action - non disponible
+    customfield_10007?: string; // Entité Origine (Campus)
+    customfield_10008?: string; // Processus
+    // Nouveaux champs personnalisés identifiés
+    customfield_10117?: string; // Campus/Entité Origine
+    customfield_10118?: string; // Processus PR7
+    customfield_10132?: string; // Processus détaillé
+    customfield_10121?: string; // Type d'utilisateur
+    customfield_10122?: string; // Action curative (description)
+    customfield_10116?: string; // Description du problème
+    customfield_10120?: string; // Date de constatation
+    customfield_10131?: string; // Champ personnalisé supplémentaire
+    customfield_10130?: string; // Champ personnalisé supplémentaire
   };
 }
 
@@ -86,6 +97,7 @@ interface DashboardState {
   actionClotureeFilter: string;
   efficaciteFilter: string;
   entiteOrigineFilter: string;
+  processusFilter: string;
   sortField: string;
   sortDirection: 'asc' | 'desc';
   expandedIssues: Set<string>;
@@ -109,6 +121,7 @@ export default function DashboardPage() {
     actionClotureeFilter: 'all',
     efficaciteFilter: 'all',
     entiteOrigineFilter: 'all',
+    processusFilter: 'all',
     sortField: 'created',
     sortDirection: 'desc',
     expandedIssues: new Set(),
@@ -176,9 +189,11 @@ export default function DashboardPage() {
                                issue.fields.customfield_10006 === state.efficaciteFilter;
       const matchesEntiteOrigine = state.entiteOrigineFilter === 'all' || 
                                  issue.fields.customfield_10007 === state.entiteOrigineFilter;
+      const matchesProcessus = state.processusFilter === 'all' || 
+                              issue.fields.customfield_10008 === state.processusFilter;
 
       return matchesSearch && matchesStatus && matchesPriority && matchesAssignee && 
-             matchesActionCloturee && matchesEfficacite && matchesEntiteOrigine;
+             matchesActionCloturee && matchesEfficacite && matchesEntiteOrigine && matchesProcessus;
     });
 
     // Tri
@@ -245,6 +260,26 @@ export default function DashboardPage() {
         case 'customfield_10007':
           aValue = a.fields.customfield_10007 || '';
           bValue = b.fields.customfield_10007 || '';
+          break;
+        case 'customfield_10008':
+          aValue = a.fields.customfield_10008 || '';
+          bValue = b.fields.customfield_10008 || '';
+          break;
+        case 'customfield_10117':
+          aValue = a.fields.customfield_10117 || '';
+          bValue = b.fields.customfield_10117 || '';
+          break;
+        case 'customfield_10118':
+          aValue = a.fields.customfield_10118 || '';
+          bValue = b.fields.customfield_10118 || '';
+          break;
+        case 'customfield_10121':
+          aValue = a.fields.customfield_10121 || '';
+          bValue = b.fields.customfield_10121 || '';
+          break;
+        case 'customfield_10120':
+          aValue = a.fields.customfield_10120 ? new Date(a.fields.customfield_10120) : new Date(0);
+          bValue = b.fields.customfield_10120 ? new Date(b.fields.customfield_10120) : new Date(0);
           break;
         default:
           return 0;
@@ -405,6 +440,9 @@ export default function DashboardPage() {
           break;
         case 'entiteOrigine':
           value = issue.fields.customfield_10007 || 'Non défini';
+          break;
+        case 'processus':
+          value = issue.fields.customfield_10008 || 'Non défini';
           break;
         default:
           return;
@@ -601,6 +639,21 @@ export default function DashboardPage() {
               </Select>
             </div>
 
+            {/* Filtre Processus */}
+            <div>
+              <Select value={state.processusFilter} onValueChange={(value) => setState(prev => ({ ...prev, processusFilter: value }))}>
+                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white/80 backdrop-blur-sm transition-all duration-200">
+                  <SelectValue placeholder="Processus" />
+                </SelectTrigger>
+                <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
+                  <SelectItem value="all" className="text-gray-900 hover:bg-blue-50">Tous les processus</SelectItem>
+                  {getUniqueValues('processus').map((value) => (
+                    <SelectItem key={value as string} value={value as string} className="text-gray-900 hover:bg-blue-50">{value as string}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Bouton réinitialiser */}
             <div className="flex items-end">
               <Button 
@@ -614,6 +667,7 @@ export default function DashboardPage() {
                   actionClotureeFilter: 'all',
                   efficaciteFilter: 'all',
                   entiteOrigineFilter: 'all',
+                  processusFilter: 'all',
                   currentPage: 1
                 }))}
                 className="w-full border-gray-300 hover:bg-gray-50 bg-white/80 backdrop-blur-sm transition-all duration-200 hover:shadow-md"
@@ -787,6 +841,61 @@ export default function DashboardPage() {
                       )}
                     </div>
                   </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[120px]"
+                    onClick={() => handleSort('customfield_10008')}
+                  >
+                    <div className="flex items-center gap-2 font-semibold text-gray-700">
+                      <span>Processus</span>
+                      {state.sortField === 'customfield_10008' && (
+                        state.sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[120px]"
+                    onClick={() => handleSort('customfield_10117')}
+                  >
+                    <div className="flex items-center gap-2 font-semibold text-gray-700">
+                      <span>Campus</span>
+                      {state.sortField === 'customfield_10117' && (
+                        state.sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[120px]"
+                    onClick={() => handleSort('customfield_10118')}
+                  >
+                    <div className="flex items-center gap-2 font-semibold text-gray-700">
+                      <span>Processus PR7</span>
+                      {state.sortField === 'customfield_10118' && (
+                        state.sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[120px]"
+                    onClick={() => handleSort('customfield_10121')}
+                  >
+                    <div className="flex items-center gap-2 font-semibold text-gray-700">
+                      <span>Type Utilisateur</span>
+                      {state.sortField === 'customfield_10121' && (
+                        state.sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[120px]"
+                    onClick={() => handleSort('customfield_10120')}
+                  >
+                    <div className="flex items-center gap-2 font-semibold text-gray-700">
+                      <span>Date Constatation</span>
+                      {state.sortField === 'customfield_10120' && (
+                        state.sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                      )}
+                    </div>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
             <TableBody>
@@ -843,7 +952,10 @@ export default function DashboardPage() {
                             >
                               <Info className="w-3 h-3" />
                               <div className="line-clamp-2">
-                                {issue.fields.description.replace(/<[^>]*>/g, '').substring(0, 80)}...
+                                {typeof issue.fields.description === 'string' 
+                                  ? issue.fields.description.replace(/<[^>]*>/g, '').substring(0, 80) + '...'
+                                  : 'Description non disponible'
+                                }
                               </div>
                             </button>
                           </div>
@@ -905,7 +1017,10 @@ export default function DashboardPage() {
                           >
                             <div className="line-clamp-3 flex items-start gap-1">
                               <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                              <span>{issue.fields.description.replace(/<[^>]*>/g, '').substring(0, 120)}...</span>
+                              <span>{typeof issue.fields.description === 'string' 
+                                ? issue.fields.description.replace(/<[^>]*>/g, '').substring(0, 120) + '...'
+                                : 'Description non disponible'
+                              }</span>
                             </div>
                           </button>
                         ) : (
@@ -984,12 +1099,45 @@ export default function DashboardPage() {
                         {issue.fields.customfield_10007 || 'Non défini'}
                       </span>
                     </TableCell>
+                    <TableCell className="px-4 py-3">
+                      <span className="text-sm text-gray-700">
+                        {issue.fields.customfield_10008 || 'Non défini'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
+                      <span className="text-sm text-gray-700">
+                        {issue.fields.customfield_10117 || 'Non défini'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
+                      <span className="text-sm text-gray-700">
+                        {issue.fields.customfield_10118 || 'Non défini'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
+                      <span className="text-sm text-gray-700">
+                        {issue.fields.customfield_10121 || 'Non défini'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
+                      <span className="text-sm text-gray-700">
+                        {issue.fields.customfield_10120 ? (
+                          <DateDisplay 
+                            date={issue.fields.customfield_10120} 
+                            format="date"
+                            className="text-sm text-gray-600"
+                          />
+                        ) : (
+                          'Non défini'
+                        )}
+                      </span>
+                    </TableCell>
                   </TableRow>
                   
                   {/* Ligne détaillée */}
                   {state.expandedIssues.has(issue.key) && (
                     <TableRow className="bg-gray-50">
-                      <TableCell colSpan={15}>
+                      <TableCell colSpan={21}>
                         <div className="p-4 space-y-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -1092,6 +1240,52 @@ export default function DashboardPage() {
                                   {issue.fields.customfield_10007 || 'Non défini'}
                                 </p>
                               </div>
+                              <div>
+                                <h5 className="text-sm font-medium text-gray-600 mb-1">Processus</h5>
+                                <p className="text-sm text-gray-800 bg-gray-50 p-2 rounded">
+                                  {issue.fields.customfield_10008 || 'Non défini'}
+                                </p>
+                              </div>
+                              <div>
+                                <h5 className="text-sm font-medium text-gray-600 mb-1">Campus</h5>
+                                <p className="text-sm text-gray-800 bg-gray-50 p-2 rounded">
+                                  {issue.fields.customfield_10117 || 'Non défini'}
+                                </p>
+                              </div>
+                              <div>
+                                <h5 className="text-sm font-medium text-gray-600 mb-1">Processus PR7</h5>
+                                <p className="text-sm text-gray-800 bg-gray-50 p-2 rounded">
+                                  {issue.fields.customfield_10118 || 'Non défini'}
+                                </p>
+                              </div>
+                              <div>
+                                <h5 className="text-sm font-medium text-gray-600 mb-1">Type d'utilisateur</h5>
+                                <p className="text-sm text-gray-800 bg-gray-50 p-2 rounded">
+                                  {issue.fields.customfield_10121 || 'Non défini'}
+                                </p>
+                              </div>
+                              <div>
+                                <h5 className="text-sm font-medium text-gray-600 mb-1">Date de constatation</h5>
+                                <p className="text-sm text-gray-800 bg-gray-50 p-2 rounded">
+                                  {issue.fields.customfield_10120 ? (
+                                    <DateDisplay date={issue.fields.customfield_10120} format="date" />
+                                  ) : (
+                                    'Non défini'
+                                  )}
+                                </p>
+                              </div>
+                              <div>
+                                <h5 className="text-sm font-medium text-gray-600 mb-1">Description du problème</h5>
+                                <p className="text-sm text-gray-800 bg-gray-50 p-2 rounded">
+                                  {issue.fields.customfield_10116 || 'Non défini'}
+                                </p>
+                              </div>
+                              <div>
+                                <h5 className="text-sm font-medium text-gray-600 mb-1">Action curative</h5>
+                                <p className="text-sm text-gray-800 bg-gray-50 p-2 rounded">
+                                  {issue.fields.customfield_10122 || 'Non défini'}
+                                </p>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1181,6 +1375,7 @@ export default function DashboardPage() {
                 statusFilter: 'all', 
                 priorityFilter: 'all', 
                 assigneeFilter: 'all',
+                processusFilter: 'all',
                 currentPage: 1
               }))}
               className="bg-blue-600 hover:bg-blue-700 text-white"
