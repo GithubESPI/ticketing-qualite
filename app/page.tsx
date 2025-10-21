@@ -65,53 +65,49 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
+      <nav className="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
+            {/* Logo et titre */}
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
                 <BarChart3 className="w-6 h-6 text-blue-600" />
               </div>
-              <div>
+            <div>
                 <h1 className="text-xl font-bold text-gray-800">Ticketing Qualité</h1>
-                <p className="text-sm text-gray-600">Dashboard DYS</p>
+                <p className="text-sm text-gray-600">Gestion des issues et suivi qualité</p>
               </div>
             </div>
             
-            <div className="hidden md:flex items-center gap-4">
+            {/* Navigation principale */}
+            <div className="hidden md:flex items-center gap-6">
               <Button 
                 variant="ghost" 
                 onClick={() => router.push('/dashboard')}
-                className="text-gray-600 hover:text-blue-600"
+                className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg transition-all"
               >
+                <Target className="w-4 h-4 mr-2" />
                 Dashboard
               </Button>
               <Button 
                 variant="ghost" 
                 onClick={() => router.push('/analytics')}
-                className="text-gray-600 hover:text-blue-600"
+                className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg transition-all"
               >
+                <BarChart3 className="w-4 h-4 mr-2" />
                 Analytics
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="text-gray-600 hover:text-blue-600"
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Paramètres
               </Button>
             </div>
 
+            {/* Actions utilisateur */}
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-800">
-                <Bell className="w-4 h-4" />
+              <Button 
+                onClick={() => router.push('/auth/signin')}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Se connecter
               </Button>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                  <User className="w-4 h-4 text-white" />
-                </div>
-                <span className="text-sm font-medium text-gray-700">Admin</span>
-              </div>
             </div>
           </div>
         </div>
@@ -240,7 +236,7 @@ export default function HomePage() {
               </Button>
             </div>
           </div>
-        </div>
+      </div>
       </section>
 
       {/* Footer */}
