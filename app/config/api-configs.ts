@@ -44,7 +44,14 @@ export const testApiConfig = async (config: ApiConfig) => {
       }
     });
 
-    const result = {
+    const result: {
+      config: ApiConfig;
+      success: boolean;
+      status: number;
+      statusText: string;
+      headers: Record<string, string>;
+      data: any;
+    } = {
       config,
       success: response.ok,
       status: response.status,

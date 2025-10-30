@@ -104,7 +104,8 @@ export const useTickets = () => {
             return;
           }
         } catch (jiraError) {
-          console.log('⚠️ API Jira échouée, fallback vers PowerBI:', jiraError.message);
+          const jiraMsg = jiraError instanceof Error ? jiraError.message : String(jiraError);
+          console.log('⚠️ API Jira échouée, fallback vers PowerBI:', jiraMsg);
         }
       }
 

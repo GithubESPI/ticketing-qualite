@@ -17,7 +17,7 @@ const handler = NextAuth({
         token.idToken = account.id_token;
       }
       if (profile) {
-        token.picture = profile.picture;
+        token.picture = (profile as any).picture || (profile as any).photo || null;
       }
       return token;
     },

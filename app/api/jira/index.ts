@@ -1,6 +1,6 @@
 // Export centralisé de tous les endpoints Jira
 export * from './projects';
-export * from './issues';
+export { getIssue, searchIssues } from './issues';
 
 // Fonction utilitaire pour tester la connexion Jira
 export const testJiraConnection = async (): Promise<boolean> => {
@@ -9,11 +9,11 @@ export const testJiraConnection = async (): Promise<boolean> => {
     
     // Test simple avec la récupération des projets
     const { getProjects } = await import('./projects');
-    const projects = await getProjects();
+    const { projects } = await getProjects();
     
     console.log('✅ Connexion Jira réussie:', {
-      projectsCount: projects.length,
-      firstProject: projects[0]?.name
+      projectsCount: projects?.length ?? 0,
+      firstProject: projects?.[0]?.name
     });
     
     return true;

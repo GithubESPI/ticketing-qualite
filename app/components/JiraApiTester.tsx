@@ -26,7 +26,8 @@ export default function JiraApiTester({ isVisible, onClose }: JiraApiTesterProps
           const isConnected = await testJiraConnection();
           return {
             success: isConnected,
-            message: isConnected ? 'Connexion réussie' : 'Échec de la connexion'
+            message: isConnected ? 'Connexion réussie' : 'Échec de la connexion',
+            data: null
           };
         }
       },
@@ -51,7 +52,7 @@ export default function JiraApiTester({ isVisible, onClose }: JiraApiTesterProps
           const projects = await getProjects();
           return {
             success: true,
-            message: `${projects.length} projet(s) trouvé(s)`,
+            message: `${projects.projects?.length ?? 0} projet(s) trouvé(s)`,
             data: projects
           };
         }

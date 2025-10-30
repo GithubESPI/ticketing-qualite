@@ -97,8 +97,8 @@ const EfficiencyModal: React.FC<EfficiencyModalProps> = ({ isOpen, onClose, issu
                 Efficacité de l'Action
               </h3>
               <div className="flex items-center gap-4">
-                {getEfficiencyIcon(issue.fields.customfield_10006)}
-                <Badge className={`${getEfficiencyColor(issue.fields.customfield_10006)} text-sm px-4 py-2`}>
+                {getEfficiencyIcon(issue.fields.customfield_10006 || "")}
+                <Badge className={`${getEfficiencyColor(issue.fields.customfield_10006 || "")} text-sm px-4 py-2`}>
                   {issue.fields.customfield_10006 || 'Non défini'}
                 </Badge>
               </div>

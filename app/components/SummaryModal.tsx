@@ -21,6 +21,13 @@ interface SummaryModalProps {
       created: string;
       updated: string;
       project?: { name: string };
+      customfield_10001?: string;
+      customfield_10002?: string;
+      customfield_10003?: string;
+      customfield_10004?: string;
+      customfield_10005?: string;
+      customfield_10006?: string;
+      customfield_10007?: string;
     };
   } | null;
 }
@@ -241,27 +248,27 @@ export default function SummaryModal({ isOpen, onClose, issue }: SummaryModalPro
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <h5 className="text-sm font-medium text-gray-600 mb-1">Action clôturée</h5>
-                <Badge className={`${issue.fields.customfield_10001 === 'Oui' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-red-100 text-red-800 border-red-200'} text-xs`}>
-                  {issue.fields.customfield_10001 || 'Non défini'}
+                <Badge className={`${issue.fields['customfield_10001'] === 'Oui' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-red-100 text-red-800 border-red-200'} text-xs`}>
+                  {issue.fields['customfield_10001'] || 'Non défini'}
                 </Badge>
               </div>
               <div>
                 <h5 className="text-sm font-medium text-gray-600 mb-1">Action corrective</h5>
                 <p className="text-sm text-gray-800 bg-gray-50 p-2 rounded border border-gray-200">
-                  {issue.fields.customfield_10002 || 'Non défini'}
+                  {issue.fields['customfield_10002'] || 'Non défini'}
                 </p>
               </div>
               <div>
                 <h5 className="text-sm font-medium text-gray-600 mb-1">Action curative</h5>
                 <p className="text-sm text-gray-800 bg-gray-50 p-2 rounded border border-gray-200">
-                  {issue.fields.customfield_10003 || 'Non défini'}
+                  {issue.fields['customfield_10003'] || 'Non défini'}
                 </p>
               </div>
               <div>
                 <h5 className="text-sm font-medium text-gray-600 mb-1">Date de constatation</h5>
                 <p className="text-sm text-gray-800 bg-gray-50 p-2 rounded border border-gray-200">
-                  {issue.fields.customfield_10004 ? (
-                    <DateDisplay date={issue.fields.customfield_10004} format="date" />
+                  {issue.fields['customfield_10004'] ? (
+                    <DateDisplay date={issue.fields['customfield_10004']} format="date" />
                   ) : (
                     'Non défini'
                   )}
@@ -270,8 +277,8 @@ export default function SummaryModal({ isOpen, onClose, issue }: SummaryModalPro
               <div>
                 <h5 className="text-sm font-medium text-gray-600 mb-1">Date effective de réalisation</h5>
                 <p className="text-sm text-gray-800 bg-gray-50 p-2 rounded border border-gray-200">
-                  {issue.fields.customfield_10005 ? (
-                    <DateDisplay date={issue.fields.customfield_10005} format="date" />
+                  {issue.fields['customfield_10005'] ? (
+                    <DateDisplay date={issue.fields['customfield_10005']} format="date" />
                   ) : (
                     'Non défini'
                   )}
@@ -279,14 +286,14 @@ export default function SummaryModal({ isOpen, onClose, issue }: SummaryModalPro
               </div>
               <div>
                 <h5 className="text-sm font-medium text-gray-600 mb-1">Efficacité de l'action</h5>
-                <Badge className={`${issue.fields.customfield_10006 === 'EFFICACE' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'} text-xs`}>
-                  {issue.fields.customfield_10006 || 'Non défini'}
+                <Badge className={`${issue.fields['customfield_10006'] === 'EFFICACE' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'} text-xs`}>
+                  {issue.fields['customfield_10006'] || 'Non défini'}
                 </Badge>
               </div>
               <div>
                 <h5 className="text-sm font-medium text-gray-600 mb-1">Entité Origine</h5>
                 <p className="text-sm text-gray-800 bg-gray-50 p-2 rounded border border-gray-200">
-                  {issue.fields.customfield_10007 || 'Non défini'}
+                  {issue.fields['customfield_10007'] || 'Non défini'}
                 </p>
               </div>
             </div>
