@@ -29,7 +29,7 @@ function TableFooter({ className, ...props }: React.HTMLAttributes<HTMLTableSect
   );
 }
 
-function TableRow({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
+function TableRow({ className, children, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
   return (
     <tr
       data-slot="table-row"
@@ -38,7 +38,9 @@ function TableRow({ className, ...props }: React.HTMLAttributes<HTMLTableRowElem
         className,
       )}
       {...props}
-    />
+    >
+      {children}
+    </tr>
   );
 }
 
@@ -55,9 +57,11 @@ function TableHead({ className, ...props }: React.ThHTMLAttributes<HTMLTableCell
   );
 }
 
-function TableCell({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
+function TableCell({ className, children, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <td data-slot="table-cell" className={cn('p-4 align-middle [&:has([role=checkbox])]:pe-0', className)} {...props} />
+    <td data-slot="table-cell" className={cn('p-4 align-middle [&:has([role=checkbox])]:pe-0', className)} {...props}>
+      {children}
+    </td>
   );
 }
 

@@ -29,6 +29,9 @@ import AuthGuard from '@/components/AuthGuard';
 import DateDisplay from '../components/DateDisplay';
 import SummaryModal from '../components/SummaryModal';
 import EfficiencyModal from '../components/EfficiencyModal';
+import ActionsModal from '../components/ActionsModal';
+import ActionCurativeModal from '../components/ActionCurativeModal';
+import ActionCorrectiveModal from '../components/ActionCorrectiveModal';
 
 interface JiraIssue {
   id: string;
@@ -109,6 +112,12 @@ interface DashboardState {
   showSummaryModal: boolean;
   selectedEfficiencyIssue: JiraIssue | null;
   showEfficiencyModal: boolean;
+  selectedActionIssue: JiraIssue | null;
+  showActionsModal: boolean;
+  selectedActionCurativeIssue: JiraIssue | null;
+  showActionCurativeModal: boolean;
+  selectedActionCorrectiveIssue: JiraIssue | null;
+  showActionCorrectiveModal: boolean;
   currentPage: number;
   itemsPerPage: number;
 }
@@ -134,6 +143,12 @@ export default function DashboardPage() {
     showSummaryModal: false,
     selectedEfficiencyIssue: null,
     showEfficiencyModal: false,
+    selectedActionIssue: null,
+    showActionsModal: false,
+    selectedActionCurativeIssue: null,
+    showActionCurativeModal: false,
+    selectedActionCorrectiveIssue: null,
+    showActionCorrectiveModal: false,
     currentPage: 1,
     itemsPerPage: 10
   });
@@ -374,6 +389,54 @@ export default function DashboardPage() {
       ...prev,
       selectedEfficiencyIssue: null,
       showEfficiencyModal: false
+    }));
+  };
+
+  const openActionsModal = (issue: JiraIssue) => {
+    setState(prev => ({
+      ...prev,
+      selectedActionIssue: issue,
+      showActionsModal: true
+    }));
+  };
+
+  const closeActionsModal = () => {
+    setState(prev => ({
+      ...prev,
+      selectedActionIssue: null,
+      showActionsModal: false
+    }));
+  };
+
+  const openActionCurativeModal = (issue: JiraIssue) => {
+    setState(prev => ({
+      ...prev,
+      selectedActionCurativeIssue: issue,
+      showActionCurativeModal: true
+    }));
+  };
+
+  const closeActionCurativeModal = () => {
+    setState(prev => ({
+      ...prev,
+      selectedActionCurativeIssue: null,
+      showActionCurativeModal: false
+    }));
+  };
+
+  const openActionCorrectiveModal = (issue: JiraIssue) => {
+    setState(prev => ({
+      ...prev,
+      selectedActionCorrectiveIssue: issue,
+      showActionCorrectiveModal: true
+    }));
+  };
+
+  const closeActionCorrectiveModal = () => {
+    setState(prev => ({
+      ...prev,
+      selectedActionCorrectiveIssue: null,
+      showActionCorrectiveModal: false
     }));
   };
 
@@ -700,8 +763,7 @@ export default function DashboardPage() {
           <div className="max-h-[70vh] overflow-y-auto">
             <Table>
               <TableHeader className="sticky top-0 z-20 bg-gradient-to-r from-gray-50 to-blue-50 shadow-lg border-b-2 border-gray-300">
-                <TableRow className="border-b-0">
-                  <TableHead className="w-12 px-4 py-3"></TableHead>
+                <TableRow className="border-b-0"><TableHead className="w-12 px-4 py-3"></TableHead>
                   <TableHead 
                     className="cursor-pointer hover:bg-gray-100 select-none px-4 py-3 min-w-[100px]"
                     onClick={() => handleSort('key')}
@@ -917,8 +979,7 @@ export default function DashboardPage() {
             <TableBody>
               {filteredIssues.map((issue) => (
                 <React.Fragment key={issue.id}>
-                  <TableRow className="hover:bg-blue-50/50 border-b border-gray-100 transition-colors duration-200 h-16">
-                    <TableCell className="px-4 py-3">
+                  <TableRow className="hover:bg-blue-50/50 border-b border-gray-100 transition-colors duration-200 h-16"><TableCell className="px-4 py-3">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -1048,7 +1109,13 @@ export default function DashboardPage() {
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-3">
-                      <Button variant="ghost" size="sm" className="hover:bg-gray-200">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="hover:bg-gray-200"
+                        onClick={() => openActionsModal(issue)}
+                        title="Plus d'actions"
+                      >
                         <MoreHorizontal className="w-4 h-4" />
                       </Button>
                     </TableCell>
@@ -1058,17 +1125,63 @@ export default function DashboardPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="px-4 py-3">
-                      <div className="max-w-[300px]">
-                        <span className="text-sm text-gray-700 line-clamp-2">
-                          {issue.fields.customfield_10002 || 'Non défini'}
-                        </span>
+                      <div className="flex items-center gap-2">
+                        <div className="max-w-[300px] flex-1">
+                          {issue.fields.customfield_10002 && issue.fields.customfield_10002 !== 'Non défini' ? (
+                            <button
+                              onClick={() => openActionCorrectiveModal(issue)}
+                              className="text-sm text-gray-700 line-clamp-2 hover:text-blue-600 hover:underline text-left transition-colors cursor-pointer w-full"
+                              title="Cliquer pour voir l'action corrective complète"
+                            >
+                              {issue.fields.customfield_10002}
+                            </button>
+                          ) : (
+                            <span className="text-sm text-gray-500">Non défini</span>
+                          )}
+                        </div>
+                        {issue.fields.customfield_10002 && issue.fields.customfield_10002 !== 'Non défini' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="p-1 hover:bg-blue-100 hover:text-blue-600"
+                            onClick={() => openActionCorrectiveModal(issue)}
+                            title="Voir l'action corrective complète"
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-3">
-                      <div className="max-w-[300px]">
-                        <span className="text-sm text-gray-700 line-clamp-2">
-                          {issue.fields.customfield_10003 || 'Non défini'}
-                        </span>
+                      <div className="flex items-center gap-2">
+                        <div className="max-w-[250px] flex-1">
+                          {((issue.fields.customfield_10122 && issue.fields.customfield_10122 !== 'Non défini') || 
+                            (issue.fields.customfield_10003 && issue.fields.customfield_10003 !== 'Non défini')) ? (
+                            <button
+                              onClick={() => openActionCurativeModal(issue)}
+                              className="text-sm text-gray-700 line-clamp-2 hover:text-blue-600 hover:underline text-left transition-colors cursor-pointer w-full"
+                              title="Cliquer pour voir l'action curative complète"
+                            >
+                              {(issue.fields.customfield_10122 && issue.fields.customfield_10122 !== 'Non défini') 
+                                ? issue.fields.customfield_10122 
+                                : issue.fields.customfield_10003}
+                            </button>
+                          ) : (
+                            <span className="text-sm text-gray-500">Non défini</span>
+                          )}
+                        </div>
+                        {((issue.fields.customfield_10122 && issue.fields.customfield_10122 !== 'Non défini') || 
+                          (issue.fields.customfield_10003 && issue.fields.customfield_10003 !== 'Non défini')) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="p-1 hover:bg-blue-100 hover:text-blue-600"
+                            onClick={() => openActionCurativeModal(issue)}
+                            title="Voir l'action curative complète"
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-3">
@@ -1152,8 +1265,7 @@ export default function DashboardPage() {
                   
                   {/* Ligne détaillée */}
                   {state.expandedIssues.has(issue.key) && (
-                    <TableRow className="bg-gray-50">
-                      <TableCell colSpan={21}>
+                    <TableRow className="bg-gray-50"><TableCell colSpan={21}>
                         <div className="p-4 space-y-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -1221,7 +1333,11 @@ export default function DashboardPage() {
                               <div>
                                 <h5 className="text-sm font-medium text-gray-600 mb-1">Action curative</h5>
                                 <p className="text-sm text-gray-800 bg-gray-50 p-2 rounded">
-                                  {issue.fields.customfield_10003 || 'Non défini'}
+                                  {(issue.fields.customfield_10122 && issue.fields.customfield_10122 !== 'Non défini') 
+                                    ? issue.fields.customfield_10122 
+                                    : (issue.fields.customfield_10003 && issue.fields.customfield_10003 !== 'Non défini')
+                                      ? issue.fields.customfield_10003
+                                      : 'Non défini'}
                                 </p>
                               </div>
                               <div>
@@ -1297,9 +1413,11 @@ export default function DashboardPage() {
                                 </p>
                               </div>
                               <div>
-                                <h5 className="text-sm font-medium text-gray-600 mb-1">Action curative</h5>
+                                <h5 className="text-sm font-medium text-gray-600 mb-1">Action curative (description)</h5>
                                 <p className="text-sm text-gray-800 bg-gray-50 p-2 rounded">
-                                  {issue.fields.customfield_10122 || 'Non défini'}
+                                  {(issue.fields.customfield_10122 && issue.fields.customfield_10122 !== 'Non défini') 
+                                    ? issue.fields.customfield_10122 
+                                    : 'Non défini'}
                                 </p>
                               </div>
                             </div>
@@ -1414,6 +1532,27 @@ export default function DashboardPage() {
         isOpen={state.showEfficiencyModal}
         onClose={closeEfficiencyModal}
         issue={state.selectedEfficiencyIssue}
+      />
+
+      {/* Modal pour les actions */}
+      <ActionsModal
+        isOpen={state.showActionsModal}
+        onClose={closeActionsModal}
+        issue={state.selectedActionIssue}
+      />
+
+      {/* Modal pour l'action curative */}
+      <ActionCurativeModal
+        isOpen={state.showActionCurativeModal}
+        onClose={closeActionCurativeModal}
+        issue={state.selectedActionCurativeIssue}
+      />
+
+      {/* Modal pour l'action corrective */}
+      <ActionCorrectiveModal
+        isOpen={state.showActionCorrectiveModal}
+        onClose={closeActionCorrectiveModal}
+        issue={state.selectedActionCorrectiveIssue}
       />
       </div>
     </AuthGuard>
