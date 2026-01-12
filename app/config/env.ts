@@ -28,6 +28,12 @@ export const validateConfig = () => {
   if (!process.env.NEXT_PUBLIC_JIRA_URL) {
     missingVars.push('NEXT_PUBLIC_JIRA_URL');
   }
+
+  // Vérification critique pour l'authentification en production
+  if (process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL) {
+    console.warn('⚠️ ATTENTION: NEXTAUTH_URL n\'est pas défini en production. Cela causera des erreurs de redirection Azure AD.');
+    // Nous ne l'ajoutons pas à missingVars pour ne pas bloquer l'application, car nous avons un fallback dans route.ts
+  }
   
   if (missingVars.length > 0) {
     console.warn(`Variables d'environnement manquantes: ${missingVars.join(', ')}. Utilisation des valeurs par défaut.`);

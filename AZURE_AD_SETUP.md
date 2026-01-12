@@ -17,7 +17,8 @@ Ce guide vous explique comment configurer l'authentification Azure AD pour votre
 - **Redirect URI** : 
   - Platform : Web
   - URI : `http://localhost:3000/api/auth/callback/azure-ad` (pour le développement)
-  - URI : `https://votre-domaine.com/api/auth/callback/azure-ad` (pour la production)
+  - URI : `https://ticketing-qualite.groupe-espi.fr/api/auth/callback/azure-ad` (pour la production)
+
 
 ### Étape 3 : Récupérer les informations
 Après la création de l'application :

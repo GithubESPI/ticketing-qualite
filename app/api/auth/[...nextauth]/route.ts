@@ -1,6 +1,12 @@
 import NextAuth from 'next-auth';
 import AzureADProvider from 'next-auth/providers/azure-ad';
 
+// Configuration de secours pour l'URL en production
+// Cela assure que le callback est correct même si NEXTAUTH_URL n'est pas défini dans l'environnement
+if (process.env.NODE_ENV === 'production' && (!process.env.NEXTAUTH_URL || process.env.NEXTAUTH_URL.includes('localhost'))) {
+  process.env.NEXTAUTH_URL = 'https://ticketing-qualite.groupe-espi.fr';
+}
+
 const handler = NextAuth({
   providers: [
     AzureADProvider({
