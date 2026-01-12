@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       params: {
         jql: 'project = DYS',
         maxResults: maxResults,
-        fields: 'summary,status,priority,assignee,reporter,created,updated,description,issuetype,project,customfield_10117,customfield_10118,customfield_10132,customfield_10121,customfield_10122,customfield_10116,customfield_10120,customfield_10131,customfield_10130'
+        fields: 'summary,status,priority,assignee,reporter,created,updated,description,issuetype,project,customfield_10001,customfield_10002,customfield_10003,customfield_10004,customfield_10005,customfield_10006,customfield_10007,customfield_10008,customfield_10117,customfield_10118,customfield_10119,customfield_10120,customfield_10121,customfield_10122,customfield_10123,customfield_10126,customfield_10127,customfield_10128,customfield_10130,customfield_10131,customfield_10132'
       }
     });
 
@@ -55,16 +55,16 @@ export async function GET(request: NextRequest) {
     if (issuesData.length > 0) {
       console.log('🔍 Structure des données Jira Issues:');
       console.log('Champs disponibles:', Object.keys(issuesData[0].fields || {}));
-      console.log('Exemple de données:', JSON.stringify(issuesData[0], null, 2));
+      // console.log('Exemple de données:', JSON.stringify(issuesData[0], null, 2));
     }
 
     // 2. Mapper les données Jira vers le format standard
     const mappedIssues = issuesData.map((issue: any) => {
-      console.log(`🔍 Issue ${issue.key} - Mapping:`, {
-        key: issue.key,
-        summary: issue.fields.summary,
-        customFields: Object.keys(issue.fields).filter(key => key.startsWith('customfield_'))
-      });
+      // console.log(`🔍 Issue ${issue.key} - Mapping:`, {
+      //   key: issue.key,
+      //   summary: issue.fields.summary,
+      //   customFields: Object.keys(issue.fields).filter(key => key.startsWith('customfield_'))
+      // });
 
       return {
         id: issue.id,
@@ -80,29 +80,48 @@ export async function GET(request: NextRequest) {
           description: extractTextFromJiraDoc(issue.fields.description) || 'Description depuis Jira',
           issuetype: issue.fields.issuetype || { name: 'Task', iconUrl: '/jira-task-icon.png' },
           project: issue.fields.project || { key: 'DYS', name: 'Ticketing Qualité' },
-          // Champs personnalisés récupérés directement depuis Jira
-          customfield_10001: 'Non défini', // Action clôturée - non disponible
-          customfield_10002: 'Non défini', // Action corrective - non disponible  
-          customfield_10003: 'Non défini', // Action curative - non disponible
-          customfield_10004: 'Non défini', // Date de constatation - non disponible
-          customfield_10005: 'Non défini', // Date effective de réalisation - non disponible
-          customfield_10006: 'Non défini', // Efficacité de l'action - non disponible
-          customfield_10007: Array.isArray(issue.fields.customfield_10117) 
-            ? issue.fields.customfield_10117[0]?.value || 'Non défini'
-            : issue.fields.customfield_10117?.value || 'Non défini', // Entité Origine (Campus)
-          customfield_10008: issue.fields.customfield_10118?.value || issue.fields.customfield_10132?.value || 'Non défini', // Processus
-          // Nouveaux champs personnalisés
+          
+          // MAPPING DES CHAMPS PERSONNALISÉS CORRIGÉ
+          
+          // Action clôturée (customfield_10128)
+          customfield_10001: issue.fields.customfield_10128?.value || (typeof issue.fields.customfield_10128 === 'string' ? issue.fields.customfield_10128 : 'Non défini'),
+          
+          // Action corrective (customfield_10123)
+          customfield_10002: extractTextFromJiraDoc(issue.fields.customfield_10123) || (typeof issue.fields.customfield_10123 === 'string' ? issue.fields.customfield_10123 : 'Non défini'),
+          
+          // Action curative (customfield_10122)
+          customfield_10003: extractTextFromJiraDoc(issue.fields.customfield_10122) || (typeof issue.fields.customfield_10122 === 'string' ? issue.fields.customfield_10122 : 'Non défini'),
+          
+          // Date de constatation (customfield_10120)
+          customfield_10004: issue.fields.customfield_10120 || null,
+          
+          // Date effective de réalisation (customfield_10130 ou customfield_10126)
+          customfield_10005: issue.fields.customfield_10130 || issue.fields.customfield_10126 || null,
+          
+          // Efficacité de l'action (customfield_10127)
+          customfield_10006: issue.fields.customfield_10127?.value || (typeof issue.fields.customfield_10127 === 'string' ? issue.fields.customfield_10127 : 'Non défini'),
+          
+          // Entité Origine (customfield_10117)
+          customfield_10007: (Array.isArray(issue.fields.customfield_10117) ? issue.fields.customfield_10117[0]?.value : issue.fields.customfield_10117?.value) || 
+                             (typeof issue.fields.customfield_10117 === 'string' ? issue.fields.customfield_10117 : 'Non défini'),
+          
+          // Processus (customfield_10118)
+          customfield_10008: issue.fields.customfield_10118?.value || 
+                             issue.fields.customfield_10119?.value || // Si Processus R07
+                             (typeof issue.fields.customfield_10118 === 'string' ? issue.fields.customfield_10118 : 'Non défini'),
+                             
+          // Anciens mappings conservés pour compatibilité (optionnel)
           customfield_10117: Array.isArray(issue.fields.customfield_10117) 
             ? issue.fields.customfield_10117[0]?.value || 'Non défini'
-            : issue.fields.customfield_10117?.value || issue.fields.customfield_10117 || 'Non défini', // Campus/Entité Origine
-          customfield_10118: issue.fields.customfield_10118?.value || issue.fields.customfield_10118 || 'Non défini', // Processus PR7
-          customfield_10132: issue.fields.customfield_10132?.value || issue.fields.customfield_10132 || 'Non défini', // Processus détaillé
-          customfield_10121: issue.fields.customfield_10121?.value || issue.fields.customfield_10121 || 'Non défini', // Type d'utilisateur
+            : issue.fields.customfield_10117?.value || (typeof issue.fields.customfield_10117 === 'string' ? issue.fields.customfield_10117 : 'Non défini'),
+          customfield_10118: issue.fields.customfield_10118?.value || (typeof issue.fields.customfield_10118 === 'string' ? issue.fields.customfield_10118 : 'Non défini'),
+          customfield_10132: issue.fields.customfield_10132?.value || (typeof issue.fields.customfield_10132 === 'string' ? issue.fields.customfield_10132 : 'Non défini'),
+          customfield_10121: issue.fields.customfield_10121?.value || (typeof issue.fields.customfield_10121 === 'string' ? issue.fields.customfield_10121 : 'Non défini'),
           customfield_10122: extractTextFromJiraDoc(issue.fields.customfield_10122) || 'Non défini', // Action curative (description)
           customfield_10116: extractTextFromJiraDoc(issue.fields.customfield_10116) || 'Non défini', // Description du problème
           customfield_10120: issue.fields.customfield_10120 || 'Non défini', // Date de constatation
-          customfield_10131: issue.fields.customfield_10131?.value || issue.fields.customfield_10131 || 'Non défini', // Champ personnalisé supplémentaire
-          customfield_10130: issue.fields.customfield_10130?.value || issue.fields.customfield_10130 || 'Non défini' // Champ personnalisé supplémentaire
+          customfield_10131: issue.fields.customfield_10131?.value || (typeof issue.fields.customfield_10131 === 'string' ? issue.fields.customfield_10131 : 'Non défini'), // Champ personnalisé supplémentaire
+          customfield_10130: issue.fields.customfield_10130?.value || (typeof issue.fields.customfield_10130 === 'string' ? issue.fields.customfield_10130 : 'Non défini') // Champ personnalisé supplémentaire
         }
       };
     });
