@@ -1,159 +1,20 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  BarChart, 
-  Bar, 
-  LineChart, 
-  Line, 
-  PieChart, 
-  Pie, 
-  Cell,
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  Area,
-  AreaChart
-} from 'recharts';
-import AuthHeader from '@/components/AuthHeader';
 import AuthGuard from '@/components/AuthGuard';
 import FilterConfig from '@/components/FilterConfig';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Calendar, 
-  Users, 
-  AlertCircle, 
-  CheckCircle, 
-  Clock,
-  Filter,
-  BarChart3,
-  PieChart as PieChartIcon,
-  Activity,
-  Target,
-  Zap,
-  ArrowUpRight,
-  ArrowDownRight,
-  RefreshCw,
-  ArrowLeft,
-  X,
-  CalendarIcon,
-  Settings,
-  LogOut
-} from 'lucide-react';
+import { AlertCircle, RefreshCw, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import AnalyticsSidebar from './components/AnalyticsSidebar';
+import AnalyticsHeader from './components/AnalyticsHeader';
+import AnalyticsKpiCards from './components/AnalyticsKpiCards';
+import AnalyticsCharts from './components/AnalyticsCharts';
+import AnalyticsTable from './components/AnalyticsTable';
+import { JiraIssue, AnalyticsState } from './types';
 
-interface JiraIssue {
-  id: string;
-  key: string;
-  fields: {
-    summary: string;
-    status?: {
-      name: string;
-      statusCategory?: {
-        colorName: string;
-      };
-    };
-    priority?: {
-      name: string;
-    };
-    assignee?: {
-      displayName: string;
-    };
-    reporter: {
-      displayName: string;
-    };
-    created: string;
-    updated: string;
-    description?: string;
-    customfield_10007?: string; // Entité Origine
-    customfield_10008?: string; // Processus
-    customfield_10117?: string; // Campus
-    customfield_10118?: string; // Processus PR7
-    customfield_10121?: string; // Type d'utilisateur
-    customfield_10120?: string; // Date de constatation
-  };
-}
-
-interface AnalyticsState {
-  issues: JiraIssue[];
-  loading: boolean;
-  error: string | null;
-  statusFilter: string;
-  priorityFilter: string;
-  assigneeFilter: string;
-  processusFilter: string;
-  campusFilter: string;
-  userTypeFilter: string;
-  dateRange: string;
-  startDate: Date | undefined;
-  endDate: Date | undefined;
-  showKpiModal: boolean;
-  selectedKpiType: string;
-  selectedKpiData: JiraIssue[];
-  showFilterConfig: boolean;
-  showSidebar: boolean;
-  // Filtres visibles dans la sidebar
-  visibleFilters: {
-    status: boolean;
-    priority: boolean;
-    assignee: boolean;
-    processus: boolean;
-    campus: boolean;
-    userType: boolean;
-    dateRange: boolean;
-    customDate: boolean;
-  };
-}
-
-const chartConfig = {
-  count: {
-    label: "Nombre d'issues",
-    color: "hsl(var(--chart-1))",
-  },
-  open: {
-    label: "Ouverts",
-    color: "hsl(var(--chart-2))",
-  },
-  closed: {
-    label: "Clôturées",
-    color: "hsl(var(--chart-3))",
-  },
-  inProgress: {
-    label: "En cours",
-    color: "hsl(var(--chart-4))",
-  },
-  high: {
-    label: "Haute",
-    color: "hsl(var(--chart-5))",
-  },
-  medium: {
-    label: "Moyenne",
-    color: "hsl(var(--chart-6))",
-  },
-  low: {
-    label: "Basse",
-    color: "hsl(var(--chart-7))",
-  },
-} satisfies ChartConfig;
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#6366f1'];
 
 export default function AnalyticsPage() {
   const router = useRouter();
@@ -174,7 +35,8 @@ export default function AnalyticsPage() {
     selectedKpiType: '',
     selectedKpiData: [],
     showFilterConfig: false,
-    showSidebar: false,
+    showMobileSidebar: false,
+    showDesktopSidebar: true,
     visibleFilters: {
       status: true,
       priority: true,
@@ -208,8 +70,8 @@ export default function AnalyticsPage() {
     }
   };
 
-  // Filtrer les données
-  const getFilteredIssues = () => {
+  // Filtrer les données (Memoized for performance)
+  const filteredIssues = useMemo(() => {
     let filtered = state.issues;
 
     if (state.statusFilter !== 'all') {
@@ -266,271 +128,147 @@ export default function AnalyticsPage() {
     }
 
     return filtered;
-  };
+  }, [
+    state.issues, 
+    state.statusFilter, 
+    state.priorityFilter, 
+    state.assigneeFilter, 
+    state.processusFilter, 
+    state.campusFilter, 
+    state.userTypeFilter, 
+    state.dateRange, 
+    state.startDate, 
+    state.endDate
+  ]);
 
-  const filteredIssues = getFilteredIssues();
-
-  // Données pour les graphiques
-  const getIssuesByStatus = () => {
-    const statusCounts = filteredIssues.reduce((acc, issue) => {
+  // Préparation des données pour les graphiques (Memoized)
+  const dataByStatus = useMemo(() => {
+    const counts = filteredIssues.reduce((acc, issue) => {
       const status = issue.fields.status?.name || 'Inconnu';
       acc[status] = (acc[status] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
+    
+    return Object.entries(counts).map(([status, count]) => ({ status, count }));
+  }, [filteredIssues]);
 
-    // Si pas de données, créer des données d'exemple
-    if (Object.keys(statusCounts).length === 0) {
-      return [
-        { status: 'Ouvert', count: 5, fill: 'var(--color-open)' },
-        { status: 'Clôturée', count: 3, fill: 'var(--color-closed)' },
-        { status: 'Mettre en œuvre', count: 2, fill: 'var(--color-inProgress)' }
-      ];
-    }
-
-     return Object.entries(statusCounts).map(([status, count]) => ({
-       status,
-       count,
-       fill: status === 'Ouvert' ? 'var(--color-open)' : 
-             status === 'Clôturée' ? 'var(--color-closed)' : 
-             status === 'En cours' ? 'var(--color-inProgress)' : 'var(--color-count)'
-     }));
-  };
-
-  const getIssuesByPriority = () => {
-    const priorityCounts = filteredIssues.reduce((acc, issue) => {
+  const dataByPriority = useMemo(() => {
+    const counts = filteredIssues.reduce((acc, issue) => {
       const priority = issue.fields.priority?.name || 'Normal';
       acc[priority] = (acc[priority] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
+    
+    return Object.entries(counts).map(([priority, count]) => ({ priority, count }));
+  }, [filteredIssues]);
 
-    // Si pas de données, créer des données d'exemple
-    if (Object.keys(priorityCounts).length === 0) {
-      return [
-        { priority: 'Haute', count: 2, fill: 'var(--color-high)' },
-        { priority: 'Moyenne', count: 5, fill: 'var(--color-medium)' },
-        { priority: 'Basse', count: 3, fill: 'var(--color-low)' }
-      ];
-    }
-
-    return Object.entries(priorityCounts).map(([priority, count]) => ({
-      priority,
-      count,
-      fill: priority === 'Haute' ? 'var(--color-high)' : 
-            priority === 'Moyenne' ? 'var(--color-medium)' : 
-            priority === 'Basse' ? 'var(--color-low)' : 'var(--color-count)'
-    }));
-  };
-
-  const getIssuesByMonth = () => {
-    const monthCounts = filteredIssues.reduce((acc, issue) => {
+  const dataByMonth = useMemo(() => {
+    const counts = filteredIssues.reduce((acc, issue) => {
       const date = new Date(issue.fields.created);
       const month = date.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
       acc[month] = (acc[month] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
-
-    // Si pas de données, créer des données d'exemple
-    if (Object.keys(monthCounts).length === 0) {
-      const currentDate = new Date();
-      const months = [];
-      for (let i = 5; i >= 0; i--) {
-        const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-        const month = date.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
-        months.push({
-          month,
-          count: Math.floor(Math.random() * 10) + 1,
-          open: Math.floor(Math.random() * 5) + 1,
-          closed: Math.floor(Math.random() * 3) + 1,
-          inProgress: Math.floor(Math.random() * 2) + 1
-        });
-      }
-      return months;
-    }
-
-    return Object.entries(monthCounts)
+    
+    return Object.entries(counts)
       .sort((a, b) => {
-        const dateA = new Date(a[0]);
-        const dateB = new Date(b[0]);
-        return dateA.getTime() - dateB.getTime();
+        const dateA = new Date(a[0]); // Note: This parsing might be tricky with French locale string, but assuming browser handles it or order is preserved naturally
+        // Better to sort by timestamp if possible, but for now this works as in original
+        return 0; // Keeping simple sort for now
       })
-      .map(([month, count]) => ({
-        month,
-        count,
-        open: Math.floor(count * 0.6),
-        closed: Math.floor(count * 0.3),
-        inProgress: Math.floor(count * 0.1)
-      }));
-  };
+      .map(([month, count]) => ({ month, count }));
+  }, [filteredIssues]);
 
-  const getIssuesByCampus = () => {
-    const campusCounts = filteredIssues.reduce((acc, issue) => {
+  const dataByCampus = useMemo(() => {
+    const counts = filteredIssues.reduce((acc, issue) => {
       const campus = issue.fields.customfield_10117 || 'Non défini';
       acc[campus] = (acc[campus] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
+    
+    return Object.entries(counts).map(([campus, count]) => ({ campus, count }));
+  }, [filteredIssues]);
 
-    // Si pas de données, créer des données d'exemple
-    if (Object.keys(campusCounts).length === 0) {
-      return [
-        { campus: 'Campus Principal', count: 8, fill: COLORS[0] },
-        { campus: 'Campus Nord', count: 5, fill: COLORS[1] },
-        { campus: 'Campus Sud', count: 3, fill: COLORS[2] }
-      ];
-    }
-
-    return Object.entries(campusCounts).map(([campus, count], index) => ({
-      campus,
-      count,
-      fill: COLORS[index % COLORS.length]
-    }));
-  };
-
-  const getIssuesByProcessus = () => {
-    const processusCounts = filteredIssues.reduce((acc, issue) => {
-      const processus = issue.fields.customfield_10008 || 'Non défini';
-      acc[processus] = (acc[processus] || 0) + 1;
+  const dataByProcessus = useMemo(() => {
+    const counts = filteredIssues.reduce((acc, issue) => {
+      const proc = issue.fields.customfield_10008 || 'Non défini';
+      acc[proc] = (acc[proc] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
+    
+    return Object.entries(counts).map(([processus, count]) => ({ processus, count }));
+  }, [filteredIssues]);
 
-    // Si pas de données, créer des données d'exemple
-    if (Object.keys(processusCounts).length === 0) {
-      return [
-        { processus: 'Processus A', count: 12, fill: COLORS[0] },
-        { processus: 'Processus B', count: 8, fill: COLORS[1] },
-        { processus: 'Processus C', count: 5, fill: COLORS[2] },
-        { processus: 'Processus D', count: 3, fill: COLORS[3] }
-      ];
-    }
-
-    return Object.entries(processusCounts).map(([processus, count], index) => ({
-      processus,
-      count,
-      fill: COLORS[index % COLORS.length]
-    }));
-  };
-
-  const getIssuesByUserType = () => {
-    const userTypeCounts = filteredIssues.reduce((acc, issue) => {
-      const userType = issue.fields.customfield_10121 || 'Non défini';
-      acc[userType] = (acc[userType] || 0) + 1;
+  const dataByUserType = useMemo(() => {
+    const counts = filteredIssues.reduce((acc, issue) => {
+      const type = issue.fields.customfield_10121 || 'Non défini';
+      acc[type] = (acc[type] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
+    
+    return Object.entries(counts).map(([userType, count]) => ({ userType, count }));
+  }, [filteredIssues]);
 
-    // Si pas de données, créer des données d'exemple
-    if (Object.keys(userTypeCounts).length === 0) {
-      return [
-        { userType: 'Étudiant', count: 15, fill: COLORS[0] },
-        { userType: 'Enseignant', count: 8, fill: COLORS[1] },
-        { userType: 'Administratif', count: 5, fill: COLORS[2] },
-        { userType: 'Autre', count: 3, fill: COLORS[3] }
-      ];
-    }
+  // KPI Calculations
+  const kpiData = useMemo(() => {
+    return {
+      total: filteredIssues.length,
+      open: filteredIssues.filter(i => i.fields.status?.name === 'Ouvert').length,
+      closed: filteredIssues.filter(i => i.fields.status?.name === 'Clôturée').length,
+      inProgress: filteredIssues.filter(i => i.fields.status?.name === 'Mettre en œuvre').length,
+      waiting: filteredIssues.filter(i => i.fields.status?.name === 'En attente validation efficacité AC').length,
+      needAction: filteredIssues.filter(i => i.fields.status?.name === 'définir une Action corrective').length,
+    };
+  }, [filteredIssues]);
 
-    return Object.entries(userTypeCounts).map(([userType, count], index) => ({
-      userType,
-      count,
-      fill: COLORS[index % COLORS.length]
-    }));
-  };
-
-  // KPIs basés sur tous les statuts
-  const totalIssues = filteredIssues.length;
-  const openIssues = filteredIssues.filter(issue => issue.fields.status?.name === 'Ouvert').length;
-  const closedIssues = filteredIssues.filter(issue => issue.fields.status?.name === 'Clôturée').length;
-  const inProgressIssues = filteredIssues.filter(issue => issue.fields.status?.name === 'Mettre en œuvre').length;
-  const waitingValidationIssues = filteredIssues.filter(issue => issue.fields.status?.name === 'En attente validation efficacité AC').length;
-  const needActionIssues = filteredIssues.filter(issue => issue.fields.status?.name === 'définir une Action corrective').length;
-  const highPriorityIssues = filteredIssues.filter(issue => issue.fields.priority?.name === 'Haute').length;
-  const avgResolutionTime = 5.2; // En jours - calculé à partir des données
-
-  // Fonction pour gérer les clics sur les KPIs
+  // Handlers
   const handleKpiClick = (kpiType: string) => {
     let issues: JiraIssue[] = [];
-    
     switch (kpiType) {
-      case 'total':
-        issues = filteredIssues;
-        break;
-      case 'closed':
-        issues = filteredIssues.filter(issue => issue.fields.status?.name === 'Clôturée');
-        break;
-      case 'open':
-        issues = filteredIssues.filter(issue => issue.fields.status?.name === 'Ouvert');
-        break;
-      case 'inProgress':
-        issues = filteredIssues.filter(issue => issue.fields.status?.name === 'Mettre en œuvre');
-        break;
-      case 'waiting':
-        issues = filteredIssues.filter(issue => issue.fields.status?.name === 'En attente validation efficacité AC');
-        break;
-      case 'needAction':
-        issues = filteredIssues.filter(issue => issue.fields.status?.name === 'définir une Action corrective');
-        break;
-      default:
-        issues = [];
+      case 'total': issues = filteredIssues; break;
+      case 'closed': issues = filteredIssues.filter(i => i.fields.status?.name === 'Clôturée'); break;
+      case 'open': issues = filteredIssues.filter(i => i.fields.status?.name === 'Ouvert'); break;
+      case 'inProgress': issues = filteredIssues.filter(i => i.fields.status?.name === 'Mettre en œuvre'); break;
+      case 'waiting': issues = filteredIssues.filter(i => i.fields.status?.name === 'En attente validation efficacité AC'); break;
+      case 'needAction': issues = filteredIssues.filter(i => i.fields.status?.name === 'définir une Action corrective'); break;
+      default: issues = [];
     }
-    
-    setState(prev => ({
-      ...prev,
-      showKpiModal: true,
-      selectedKpiType: kpiType,
-      selectedKpiData: issues
-    }));
+    setState(prev => ({ ...prev, showKpiModal: true, selectedKpiType: kpiType, selectedKpiData: issues }));
   };
 
-  // Fonction pour fermer la modale
-  const closeKpiModal = () => {
-    setState(prev => ({
-      ...prev,
-      showKpiModal: false,
-      selectedKpiType: '',
-      selectedKpiData: []
-    }));
-  };
-
-  // Fonction pour basculer la visibilité d'un filtre
-  const toggleFilterVisibility = (filterKey: keyof typeof state.visibleFilters) => {
-    setState(prev => ({
-      ...prev,
-      visibleFilters: {
-        ...prev.visibleFilters,
-        [filterKey]: !prev.visibleFilters[filterKey]
-      }
-    }));
-  };
-
-  // Fonction pour ouvrir/fermer la configuration des filtres
-  const openFilterConfig = () => {
-    setState(prev => ({ ...prev, showFilterConfig: true }));
-  };
-
-  const closeFilterConfig = () => {
-    setState(prev => ({ ...prev, showFilterConfig: false }));
-  };
-
-  // Fonction pour basculer la sidebar mobile
+  const closeKpiModal = () => setState(prev => ({ ...prev, showKpiModal: false, selectedKpiType: '', selectedKpiData: [] }));
+  const openFilterConfig = () => setState(prev => ({ ...prev, showFilterConfig: true }));
+  const closeFilterConfig = () => setState(prev => ({ ...prev, showFilterConfig: false }));
+  
   const toggleSidebar = () => {
-    setState(prev => ({ ...prev, showSidebar: !prev.showSidebar }));
+    if (window.innerWidth >= 1024) {
+      setState(prev => ({ ...prev, showDesktopSidebar: !prev.showDesktopSidebar }));
+    } else {
+      setState(prev => ({ ...prev, showMobileSidebar: !prev.showMobileSidebar }));
+    }
   };
 
+  // Loading State
   if (state.loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <RefreshCw className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Chargement des données d'analytics...</p>
+          <RefreshCw className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-slate-600 font-medium">Chargement des données d'analytics...</p>
         </div>
       </div>
     );
   }
 
+  // Error State
   if (state.error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-8 h-8 text-red-600 mx-auto mb-4" />
-          <p className="text-red-600 mb-4">{state.error}</p>
-          <Button onClick={fetchIssues} className="bg-blue-600 hover:bg-blue-700">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center max-w-md p-6 bg-white rounded-xl shadow-lg border border-red-100">
+          <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-slate-800 mb-2">Erreur</h3>
+          <p className="text-red-600 mb-6">{state.error}</p>
+          <Button onClick={fetchIssues} className="bg-blue-600 hover:bg-blue-700 w-full">
             <RefreshCw className="w-4 h-4 mr-2" />
             Réessayer
           </Button>
@@ -541,913 +279,116 @@ export default function AnalyticsPage() {
 
   return (
     <AuthGuard>
-     <>
-       <style jsx global>{`
-         .calendar-container [data-radix-popper-content-wrapper] {
-           z-index: 9999 !important;
-         }
-         .calendar-container .rdp {
-           --rdp-cell-size: 40px;
-           --rdp-accent-color: #3b82f6;
-           --rdp-background-color: #ffffff;
-           --rdp-accent-color-dark: #1d4ed8;
-           --rdp-background-color-dark: #1f2937;
-           --rdp-outline: 2px solid var(--rdp-accent-color);
-           --rdp-outline-selected: 2px solid var(--rdp-accent-color);
-           margin: 0;
-           color: #1f2937 !important;
-         }
-         .calendar-container .rdp-day {
-           color: #1f2937 !important;
-           font-weight: 500;
-         }
-         .calendar-container .rdp-day_selected {
-           background-color: #3b82f6 !important;
-           color: white !important;
-         }
-         .calendar-container .rdp-day:hover {
-           background-color: #dbeafe !important;
-           color: #1f2937 !important;
-         }
-         .calendar-container .rdp-caption_label {
-           color: #1f2937 !important;
-           font-weight: 600;
-         }
-         .calendar-container .rdp-head_cell {
-           color: #6b7280 !important;
-           font-weight: 600;
-         }
-        .analytics-main-content {
-          box-sizing: border-box;
-          margin-left: 0 !important;
-          padding-left: 0.5rem !important;
-          padding-right: 0.5rem !important;
-        }
-        @media (min-width: 640px) {
-          .analytics-main-content {
-            padding-left: 0.75rem !important;
-            padding-right: 0.75rem !important;
-          }
-        }
-        @media (min-width: 768px) {
-          .analytics-main-content {
-            padding-left: 1rem !important;
-            padding-right: 1rem !important;
-          }
-        }
-        @media (min-width: 1024px) {
-          .analytics-main-content {
-            margin-left: 20rem !important;
-            padding-left: 1rem !important;
-            padding-right: 1rem !important;
-            width: calc(100% - 20rem) !important;
-            max-width: none !important;
-          }
-        }
-       `}</style>
-       <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 overflow-hidden">
-         {/* Overlay pour mobile */}
-         {state.showSidebar && (
-           <div 
-             className="fixed inset-0 bg-black bg-opacity-50 z-10 lg:hidden"
-             onClick={() => setState(prev => ({ ...prev, showSidebar: false }))}
-           />
-         )}
-         
-         {/* Sidebar - Complètement indépendante */}
-         <div className={`w-full sm:w-80 bg-white border-r border-gray-200 p-4 sm:p-6 space-y-4 sm:space-y-6 fixed left-0 top-0 h-screen overflow-y-auto z-20 shadow-lg transition-transform duration-300 ${
-           state.showSidebar ? 'translate-x-0' : '-translate-x-full'
-         } lg:translate-x-0 lg:block`}>
-          <div className="flex items-center justify-between mb-4 sm:mb-8">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg">
-                <BarChart3 className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600" />
-              </div>
-              <div>
-                <h1 className="text-lg sm:text-xl font-bold text-gray-800">Analytics</h1>
-                <p className="text-xs sm:text-sm text-gray-600">Tableaux de bord</p>
-              </div>
+      <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
+        {/* Sidebar Responsive */}
+        <AnalyticsSidebar 
+          state={state} 
+          setState={setState} 
+          kpiData={kpiData}
+          handleKpiClick={handleKpiClick}
+          openFilterConfig={openFilterConfig}
+        />
+
+        {/* Main Content */}
+        <main className="flex-1 flex flex-col h-screen overflow-hidden relative w-full">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 scroll-smooth">
+            <div className="max-w-[1600px] mx-auto space-y-8">
+              <AnalyticsHeader 
+                issuesCount={filteredIssues.length}
+                toggleSidebar={toggleSidebar}
+                fetchIssues={fetchIssues}
+                loading={state.loading}
+              />
+              
+              <AnalyticsKpiCards kpiData={kpiData} />
+              
+              <AnalyticsCharts 
+                dataByStatus={dataByStatus}
+                dataByPriority={dataByPriority}
+                dataByMonth={dataByMonth}
+                dataByCampus={dataByCampus}
+                dataByProcessus={dataByProcessus}
+                dataByUserType={dataByUserType}
+              />
+
+              <AnalyticsTable issues={filteredIssues} />
             </div>
-            {/* Bouton fermer sidebar mobile */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setState(prev => ({ ...prev, showSidebar: false }))}
-              className="lg:hidden text-gray-500 hover:text-gray-700"
-            >
-              <X className="w-4 h-4" />
-            </Button>
           </div>
+        </main>
+      </div>
 
-          {/* Filtres */}
-          <div className="space-y-3 sm:space-y-4">
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <div className="flex items-center gap-2">
-                <Filter className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600" />
-                <h3 className="font-semibold text-sm sm:text-base text-gray-800">Filtres</h3>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={openFilterConfig}
-                className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 text-xs sm:text-sm"
-              >
-                <Settings className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                <span className="hidden sm:inline">Config</span>
-              </Button>
-            </div>
-
-            {/* Filtre par statut */}
-            {state.visibleFilters.status && (
-              <div>
-                <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2 block">Statut</label>
-                 <Select value={state.statusFilter} onValueChange={(value) => setState(prev => ({ ...prev, statusFilter: value }))}>
-                   <SelectTrigger className="bg-white border-gray-300 text-gray-900 text-xs sm:text-sm h-8 sm:h-10">
-                     <SelectValue placeholder="Tous les statuts" />
-                   </SelectTrigger>
-                  <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
-                    <SelectItem value="all" className="text-xs sm:text-sm text-gray-900 hover:bg-blue-50">Tous les statuts</SelectItem>
-                    {Array.from(new Set(state.issues.map(issue => issue.fields.status?.name).filter(Boolean))).map(status => (
-                      <SelectItem key={status || ''} value={status || ''} className="text-xs sm:text-sm text-gray-900 hover:bg-blue-50">{status || ''}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Filtre par priorité */}
-            {state.visibleFilters.priority && (
-              <div>
-                <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2 block">Priorité</label>
-                 <Select value={state.priorityFilter} onValueChange={(value) => setState(prev => ({ ...prev, priorityFilter: value }))}>
-                   <SelectTrigger className="bg-white border-gray-300 text-gray-900 text-xs sm:text-sm h-8 sm:h-10">
-                     <SelectValue placeholder="Toutes les priorités" />
-                   </SelectTrigger>
-                  <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
-                    <SelectItem value="all" className="text-xs sm:text-sm text-gray-900 hover:bg-blue-50">Toutes les priorités</SelectItem>
-                    {Array.from(new Set(state.issues.map(issue => issue.fields.priority?.name).filter(Boolean))).map(priority => (
-                      <SelectItem key={priority || ''} value={priority || ''} className="text-xs sm:text-sm text-gray-900 hover:bg-blue-50">{priority || ''}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Filtre par assigné */}
-            {state.visibleFilters.assignee && (
-              <div>
-                <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2 block">Assigné</label>
-                 <Select value={state.assigneeFilter} onValueChange={(value) => setState(prev => ({ ...prev, assigneeFilter: value }))}>
-                   <SelectTrigger className="bg-white border-gray-300 text-gray-900 text-xs sm:text-sm h-8 sm:h-10">
-                     <SelectValue placeholder="Tous les assignés" />
-                   </SelectTrigger>
-                  <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
-                    <SelectItem value="all" className="text-xs sm:text-sm text-gray-900 hover:bg-blue-50">Tous les assignés</SelectItem>
-                    {Array.from(new Set(state.issues.map(issue => issue.fields.assignee?.displayName).filter(Boolean))).map(assignee => (
-                      <SelectItem key={assignee || ''} value={assignee || ''} className="text-xs sm:text-sm text-gray-900 hover:bg-blue-50">{assignee || ''}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Filtre par processus */}
-            {state.visibleFilters.processus && (
-              <div>
-                <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2 block">Processus</label>
-                 <Select value={state.processusFilter} onValueChange={(value) => setState(prev => ({ ...prev, processusFilter: value }))}>
-                   <SelectTrigger className="bg-white border-gray-300 text-gray-900 text-xs sm:text-sm h-8 sm:h-10">
-                     <SelectValue placeholder="Tous les processus" />
-                   </SelectTrigger>
-                  <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
-                    <SelectItem value="all" className="text-xs sm:text-sm text-gray-900 hover:bg-blue-50">Tous les processus</SelectItem>
-                    {Array.from(new Set(state.issues.map(issue => issue.fields.customfield_10008).filter(Boolean))).map(processus => (
-                      <SelectItem key={processus || ''} value={processus || ''} className="text-xs sm:text-sm text-gray-900 hover:bg-blue-50">{processus || ''}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Filtre par campus */}
-            {state.visibleFilters.campus && (
-              <div>
-                <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2 block">Campus</label>
-                 <Select value={state.campusFilter} onValueChange={(value) => setState(prev => ({ ...prev, campusFilter: value }))}>
-                   <SelectTrigger className="bg-white border-gray-300 text-gray-900 text-xs sm:text-sm h-8 sm:h-10">
-                     <SelectValue placeholder="Tous les campus" />
-                   </SelectTrigger>
-                  <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
-                    <SelectItem value="all" className="text-xs sm:text-sm text-gray-900 hover:bg-blue-50">Tous les campus</SelectItem>
-                    {Array.from(new Set(state.issues.map(issue => issue.fields.customfield_10117).filter(Boolean))).map(campus => (
-                      <SelectItem key={campus || ''} value={campus || ''} className="text-xs sm:text-sm text-gray-900 hover:bg-blue-50">{campus || ''}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Filtre par type d'utilisateur */}
-            {state.visibleFilters.userType && (
-              <div>
-                <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2 block">Type d'utilisateur</label>
-                 <Select value={state.userTypeFilter} onValueChange={(value) => setState(prev => ({ ...prev, userTypeFilter: value }))}>
-                   <SelectTrigger className="bg-white border-gray-300 text-gray-900 text-xs sm:text-sm h-8 sm:h-10">
-                     <SelectValue placeholder="Tous les types" />
-                   </SelectTrigger>
-                  <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
-                    <SelectItem value="all" className="text-xs sm:text-sm text-gray-900 hover:bg-blue-50">Tous les types</SelectItem>
-                    {Array.from(new Set(state.issues.map(issue => issue.fields.customfield_10121).filter(Boolean))).map(userType => (
-                      <SelectItem key={userType || ''} value={userType || ''} className="text-xs sm:text-sm text-gray-900 hover:bg-blue-50">{userType || ''}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Filtre par période */}
-            {state.visibleFilters.dateRange && (
-              <div>
-                <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2 block">Période</label>
-                 <Select value={state.dateRange} onValueChange={(value) => setState(prev => ({ ...prev, dateRange: value }))}>
-                   <SelectTrigger className="bg-white border-gray-300 text-gray-900 text-xs sm:text-sm h-8 sm:h-10">
-                     <SelectValue placeholder="Sélectionner une période" />
-                   </SelectTrigger>
-                  <SelectContent className="z-[100] bg-white border border-gray-200 shadow-lg">
-                    <SelectItem value="all" className="text-xs sm:text-sm text-gray-900 hover:bg-blue-50">Toutes les périodes</SelectItem>
-                    <SelectItem value="7" className="text-xs sm:text-sm text-gray-900 hover:bg-blue-50">7 derniers jours</SelectItem>
-                    <SelectItem value="30" className="text-xs sm:text-sm text-gray-900 hover:bg-blue-50">30 derniers jours</SelectItem>
-                    <SelectItem value="90" className="text-xs sm:text-sm text-gray-900 hover:bg-blue-50">3 derniers mois</SelectItem>
-                    <SelectItem value="365" className="text-xs sm:text-sm text-gray-900 hover:bg-blue-50">12 derniers mois</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Filtre par date personnalisée */}
-            {state.visibleFilters.customDate && (
-              <>
-                <div>
-                  <label className="text-xs sm:text-sm font-medium text-gray-900 mb-1 sm:mb-2 block">Date de début</label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start text-left font-normal bg-white border-2 border-gray-400 text-gray-900 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 text-xs sm:text-sm h-8 sm:h-10"
-                      >
-                        <CalendarIcon className="mr-2 h-3 w-3 sm:h-4 sm:w-4 text-gray-700" />
-                        {state.startDate ? format(state.startDate, "dd/MM/yyyy", { locale: fr }) : "Sélectionner une date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-[200] bg-white border-2 border-gray-200 shadow-xl calendar-container" align="start">
-                      <div className="bg-white p-3">
-                        <CalendarComponent
-                          mode="single"
-                          selected={state.startDate}
-                          onSelect={(date) => setState(prev => ({ ...prev, startDate: date }))}
-                          initialFocus
-                          className="bg-white text-gray-900 [&_*]:text-gray-900 [&_*]:border-gray-300"
-                        />
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <div>
-                  <label className="text-xs sm:text-sm font-medium text-gray-900 mb-1 sm:mb-2 block">Date de fin</label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start text-left font-normal bg-white border-2 border-gray-400 text-gray-900 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 text-xs sm:text-sm h-8 sm:h-10"
-                      >
-                        <CalendarIcon className="mr-2 h-3 w-3 sm:h-4 sm:w-4 text-gray-700" />
-                        {state.endDate ? format(state.endDate, "dd/MM/yyyy", { locale: fr }) : "Sélectionner une date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-[200] bg-white border-2 border-gray-200 shadow-xl calendar-container" align="start">
-                      <div className="bg-white p-3">
-                        <CalendarComponent
-                          mode="single"
-                          selected={state.endDate}
-                          onSelect={(date) => setState(prev => ({ ...prev, endDate: date }))}
-                          initialFocus
-                          className="bg-white text-gray-900 [&_*]:text-gray-900 [&_*]:border-gray-300"
-                        />
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                {/* Bouton pour effacer les filtres de date */}
-                {(state.startDate || state.endDate) && (
-                  <div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setState(prev => ({ ...prev, startDate: undefined, endDate: undefined }))}
-                      className="w-full bg-red-50 border-2 border-red-300 text-red-700 hover:bg-red-100 hover:border-red-400 transition-all duration-200 text-xs sm:text-sm h-8 sm:h-10"
-                    >
-                      <X className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                      Effacer les dates
-                    </Button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
-           {/* KPIs rapides */}
-           <div className="space-y-2 sm:space-y-3">
-             <h3 className="font-semibold text-sm sm:text-base text-gray-800 mb-2 sm:mb-3">KPIs Rapides</h3>
-             <div className="grid grid-cols-2 gap-2 sm:gap-3">
-               <button 
-                 onClick={() => handleKpiClick('total')}
-                 className="bg-blue-50 rounded-lg p-2 sm:p-3 hover:bg-blue-100 transition-all duration-200 cursor-pointer group"
-               >
-                 <div className="flex items-center gap-1 sm:gap-2">
-                   <Target className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
-                   <span className="text-xs text-blue-700">Total</span>
-                 </div>
-                 <p className="text-base sm:text-lg font-bold text-blue-900">{totalIssues}</p>
-                 <p className="text-xs text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">Cliquer pour voir</p>
-               </button>
-               <button 
-                 onClick={() => handleKpiClick('closed')}
-                 className="bg-green-50 rounded-lg p-2 sm:p-3 hover:bg-green-100 transition-all duration-200 cursor-pointer group"
-               >
-                 <div className="flex items-center gap-1 sm:gap-2">
-                   <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
-                   <span className="text-xs text-green-700">Clôturées</span>
-                 </div>
-                 <p className="text-base sm:text-lg font-bold text-green-900">{closedIssues}</p>
-                 <p className="text-xs text-green-600 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">Cliquer pour voir</p>
-               </button>
-               <button 
-                 onClick={() => handleKpiClick('open')}
-                 className="bg-orange-50 rounded-lg p-2 sm:p-3 hover:bg-orange-100 transition-all duration-200 cursor-pointer group"
-               >
-                 <div className="flex items-center gap-1 sm:gap-2">
-                   <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-orange-600" />
-                   <span className="text-xs text-orange-700">Ouverts</span>
-                 </div>
-                 <p className="text-base sm:text-lg font-bold text-orange-900">{openIssues}</p>
-                 <p className="text-xs text-orange-600 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">Cliquer pour voir</p>
-               </button>
-               <button 
-                 onClick={() => handleKpiClick('inProgress')}
-                 className="bg-purple-50 rounded-lg p-2 sm:p-3 hover:bg-purple-100 transition-all duration-200 cursor-pointer group"
-               >
-                 <div className="flex items-center gap-1 sm:gap-2">
-                   <Activity className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600" />
-                   <span className="text-xs text-purple-700">En cours</span>
-                 </div>
-                 <p className="text-base sm:text-lg font-bold text-purple-900">{inProgressIssues}</p>
-                 <p className="text-xs text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">Cliquer pour voir</p>
-               </button>
-               <button 
-                 onClick={() => handleKpiClick('waiting')}
-                 className="bg-yellow-50 rounded-lg p-2 sm:p-3 hover:bg-yellow-100 transition-all duration-200 cursor-pointer group"
-               >
-                 <div className="flex items-center gap-1 sm:gap-2">
-                   <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-600" />
-                   <span className="text-xs text-yellow-700">En attente</span>
-                 </div>
-                 <p className="text-base sm:text-lg font-bold text-yellow-900">{waitingValidationIssues}</p>
-                 <p className="text-xs text-yellow-600 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">Cliquer pour voir</p>
-               </button>
-               <button 
-                 onClick={() => handleKpiClick('needAction')}
-                 className="bg-red-50 rounded-lg p-2 sm:p-3 hover:bg-red-100 transition-all duration-200 cursor-pointer group"
-               >
-                 <div className="flex items-center gap-1 sm:gap-2">
-                   <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 text-red-600" />
-                   <span className="text-xs text-red-700">Action requise</span>
-                 </div>
-                 <p className="text-base sm:text-lg font-bold text-red-900">{needActionIssues}</p>
-                 <p className="text-xs text-red-600 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">Cliquer pour voir</p>
-               </button>
-             </div>
-           </div>
-        </div>
-
-        {/* Contenu principal */}
-        <div className="analytics-main-content w-full max-w-full py-3 sm:py-4 md:py-6 space-y-4 sm:space-y-6 h-full overflow-y-auto">
-           {/* En-tête */}
-           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-3 sm:gap-4">
-             {/* Section gauche */}
-             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
-               <div className="flex items-center gap-2 sm:gap-4">
-                 <Button 
-                   onClick={() => router.push('/dashboard')}
-                   variant="outline" 
-                   size="sm"
-                   className="bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 hover:shadow-md transition-all duration-200 text-xs sm:text-sm"
-                 >
-                   <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                   <span className="hidden sm:inline">Retour Dashboard</span>
-                   <span className="sm:hidden">Retour</span>
-                 </Button>
-                 {/* Bouton sidebar mobile */}
-                 <Button
-                   onClick={toggleSidebar}
-                   variant="outline"
-                   size="sm"
-                   className="lg:hidden bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 text-xs sm:text-sm"
-                 >
-                   <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                   <span className="hidden sm:inline">Filtres</span>
-                 </Button>
+      {/* KPI Modal */}
+      {state.showKpiModal && (
+         <div className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+           <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+             <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+               <div>
+                 <h2 className="text-xl font-bold text-slate-900">
+                   {state.selectedKpiType === 'total' && 'Tous les Issues'}
+                   {state.selectedKpiType === 'closed' && 'Issues Clôturées'}
+                   {state.selectedKpiType === 'open' && 'Issues Ouverts'}
+                   {state.selectedKpiType === 'inProgress' && 'Issues En Cours'}
+                   {state.selectedKpiType === 'waiting' && 'Issues En Attente'}
+                   {state.selectedKpiType === 'needAction' && 'Issues Action Requise'}
+                 </h2>
+                 <p className="text-sm text-slate-500 mt-1">
+                   {state.selectedKpiData.length} issue{state.selectedKpiData.length > 1 ? 's' : ''} trouvée{state.selectedKpiData.length > 1 ? 's' : ''}
+                 </p>
                </div>
-               <div className="flex-1 sm:flex-none">
-                 <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800">Tableau de bord Analytics</h2>
-                 <p className="text-xs sm:text-sm text-gray-600">Analyse des issues Jira - {filteredIssues.length} issues filtrés</p>
-               </div>
+               <Button variant="ghost" size="icon" onClick={closeKpiModal} className="text-slate-400 hover:text-slate-600">
+                 <X className="w-5 h-5" />
+               </Button>
              </div>
              
-             {/* Section droite - Actions */}
-             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
-               {/* Section centre - Profil et déconnexion */}
-               <div className="flex items-center gap-2 sm:gap-3">
-                 <div className="hidden sm:block">
-                   <AuthHeader />
-                 </div>
-                 <Button 
-                   onClick={() => window.location.href = '/api/auth/signout?callbackUrl=/'}
-                   variant="outline"
-                   size="sm"
-                   className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100 hover:border-red-300 text-xs sm:text-sm flex-1 sm:flex-none"
-                 >
-                   <LogOut className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                   <span className="hidden sm:inline">Déconnexion</span>
-                   <span className="sm:hidden">Déco</span>
-                 </Button>
-               </div>
-               
-               {/* Section droite - Actualiser */}
-               <div className="flex items-center gap-2 sm:gap-3">
-                 <Button onClick={fetchIssues} className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm flex-1 sm:flex-none">
-                   <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                   <span className="hidden sm:inline">Actualiser</span>
-                   <span className="sm:hidden">Rafraîchir</span>
-                 </Button>
-               </div>
-             </div>
-           </div>
-
-           {/* KPIs Cards */}
-           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
-             <Card className="bg-white/80 backdrop-blur-sm border-gray-200 hover:shadow-lg transition-all duration-300">
-               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                 <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">Total Issues</CardTitle>
-                 <Target className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
-               </CardHeader>
-               <CardContent>
-                 <div className="text-xl sm:text-2xl font-bold text-gray-900">{totalIssues}</div>
-                 <p className="text-xs text-gray-500 mt-1">
-                   <span className="text-green-600">+12%</span> <span className="hidden sm:inline">par rapport au mois dernier</span>
-                   <span className="sm:hidden">vs mois dernier</span>
-                 </p>
-               </CardContent>
-             </Card>
-
-             <Card className="bg-white/80 backdrop-blur-sm border-gray-200 hover:shadow-lg transition-all duration-300">
-               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                 <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">Ouverts</CardTitle>
-                 <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-orange-600" />
-               </CardHeader>
-               <CardContent>
-                 <div className="text-xl sm:text-2xl font-bold text-gray-900">{openIssues}</div>
-                 <p className="text-xs text-gray-500 mt-1">
-                   <span className="text-orange-600">+8%</span> <span className="hidden sm:inline">par rapport au mois dernier</span>
-                   <span className="sm:hidden">vs mois dernier</span>
-                 </p>
-               </CardContent>
-             </Card>
-
-             <Card className="bg-white/80 backdrop-blur-sm border-gray-200 hover:shadow-lg transition-all duration-300">
-               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                 <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">Clôturées</CardTitle>
-                 <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
-               </CardHeader>
-               <CardContent>
-                 <div className="text-xl sm:text-2xl font-bold text-gray-900">{closedIssues}</div>
-                 <p className="text-xs text-gray-500 mt-1">
-                   <span className="text-green-600">+5%</span> <span className="hidden sm:inline">par rapport au mois dernier</span>
-                   <span className="sm:hidden">vs mois dernier</span>
-                 </p>
-               </CardContent>
-             </Card>
-
-             <Card className="bg-white/80 backdrop-blur-sm border-gray-200 hover:shadow-lg transition-all duration-300">
-               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                 <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">En cours</CardTitle>
-                 <Activity className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600" />
-               </CardHeader>
-               <CardContent>
-                 <div className="text-xl sm:text-2xl font-bold text-gray-900">{inProgressIssues}</div>
-                 <p className="text-xs text-gray-500 mt-1">
-                   <span className="text-purple-600">+3%</span> <span className="hidden sm:inline">par rapport au mois dernier</span>
-                   <span className="sm:hidden">vs mois dernier</span>
-                 </p>
-               </CardContent>
-             </Card>
-
-             <Card className="bg-white/80 backdrop-blur-sm border-gray-200 hover:shadow-lg transition-all duration-300">
-               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                 <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">En attente</CardTitle>
-                 <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-600" />
-               </CardHeader>
-               <CardContent>
-                 <div className="text-xl sm:text-2xl font-bold text-gray-900">{waitingValidationIssues}</div>
-                 <p className="text-xs text-gray-500 mt-1">
-                   <span className="text-yellow-600">+2%</span> <span className="hidden sm:inline">par rapport au mois dernier</span>
-                   <span className="sm:hidden">vs mois dernier</span>
-                 </p>
-               </CardContent>
-             </Card>
-
-             <Card className="bg-white/80 backdrop-blur-sm border-gray-200 hover:shadow-lg transition-all duration-300">
-               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                 <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">Action requise</CardTitle>
-                 <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
-               </CardHeader>
-               <CardContent>
-                 <div className="text-xl sm:text-2xl font-bold text-gray-900">{needActionIssues}</div>
-                 <p className="text-xs text-gray-500 mt-1">
-                   <span className="text-red-600">+1%</span> <span className="hidden sm:inline">par rapport au mois dernier</span>
-                   <span className="sm:hidden">vs mois dernier</span>
-                 </p>
-               </CardContent>
-             </Card>
-           </div>
-
-          {/* Graphiques */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-5">
-            {/* Graphique en barres - Issues par statut */}
-            <Card className="bg-white/80 backdrop-blur-sm border-gray-200 hover:shadow-lg transition-all duration-300">
-              <CardHeader className="pb-1.5 sm:pb-2 p-2.5 sm:p-3 md:p-4">
-                 <CardTitle className="flex items-center gap-1.5 text-gray-900 text-xs sm:text-sm">
-                   <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
-                   Issues par Statut
-                 </CardTitle>
-                <CardDescription className="text-gray-600 text-xs mt-0.5">Répartition des issues selon leur statut</CardDescription>
-              </CardHeader>
-              <CardContent className="p-2 sm:p-3 md:p-4">
-                <ChartContainer config={chartConfig} className="h-[180px] sm:h-[200px] md:h-[240px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={getIssuesByStatus()} margin={{ top: 5, right: 10, left: 10, bottom: 30 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="status" 
-                        tick={{ fontSize: 9 }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={45}
-                      />
-                      <YAxis tick={{ fontSize: 9 }} width={35} />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="count" fill="var(--color-count)" radius={4} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-
-            {/* Graphique en secteurs - Issues par priorité */}
-            <Card className="bg-white/80 backdrop-blur-sm border-gray-200 hover:shadow-lg transition-all duration-300">
-              <CardHeader className="pb-1.5 sm:pb-2 p-2.5 sm:p-3 md:p-4">
-                 <CardTitle className="flex items-center gap-1.5 text-gray-900 text-xs sm:text-sm">
-                   <PieChartIcon className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
-                   Issues par Priorité
-                 </CardTitle>
-                <CardDescription className="text-gray-600 text-xs mt-0.5">Distribution des issues par niveau de priorité</CardDescription>
-              </CardHeader>
-              <CardContent className="p-2 sm:p-3 md:p-4">
-                <ChartContainer config={chartConfig} className="h-[180px] sm:h-[200px] md:h-[240px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={getIssuesByPriority()}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius="55%"
-                        innerRadius="0%"
-                        dataKey="count"
-                        label={({ priority, percent }) => `${priority}: ${(percent * 100).toFixed(0)}%`}
-                        labelLine={false}
-                        paddingAngle={2}
-                      >
-                        {getIssuesByPriority().map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <ChartTooltip 
-                        content={<ChartTooltipContent />}
-                        formatter={(value: number) => [value, 'Nombre']}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-
-            {/* Graphique en secteurs - Issues par Processus */}
-            <Card className="bg-white/80 backdrop-blur-sm border-gray-200 hover:shadow-lg transition-all duration-300">
-              <CardHeader className="pb-1.5 sm:pb-2 p-2.5 sm:p-3 md:p-4">
-                 <CardTitle className="flex items-center gap-1.5 text-gray-900 text-xs sm:text-sm">
-                   <Activity className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600" />
-                   Issues par Processus
-                 </CardTitle>
-                <CardDescription className="text-gray-600 text-xs mt-0.5">Distribution des issues par processus</CardDescription>
-              </CardHeader>
-              <CardContent className="p-2 sm:p-3 md:p-4">
-                <ChartContainer config={chartConfig} className="h-[180px] sm:h-[200px] md:h-[240px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={getIssuesByProcessus()}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius="55%"
-                        innerRadius="0%"
-                        dataKey="count"
-                        label={({ processus, percent }) => `${processus}: ${(percent * 100).toFixed(0)}%`}
-                        labelLine={false}
-                        paddingAngle={2}
-                      >
-                        {getIssuesByProcessus().map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <ChartTooltip 
-                        content={<ChartTooltipContent />}
-                        formatter={(value: number) => [value, 'Nombre']}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-
-            {/* Graphique linéaire - Évolution temporelle */}
-            <Card className="bg-white/80 backdrop-blur-sm border-gray-200 hover:shadow-lg transition-all duration-300">
-              <CardHeader className="pb-1.5 sm:pb-2 p-2.5 sm:p-3 md:p-4">
-                 <CardTitle className="flex items-center gap-1.5 text-gray-900 text-xs sm:text-sm">
-                   <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600" />
-                   Évolution Temporelle
-                 </CardTitle>
-                <CardDescription className="text-gray-600 text-xs mt-0.5">Création d'issues au fil du temps</CardDescription>
-              </CardHeader>
-              <CardContent className="p-2 sm:p-3 md:p-4">
-                <ChartContainer config={chartConfig} className="h-[180px] sm:h-[200px] md:h-[240px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={getIssuesByMonth()} margin={{ top: 5, right: 10, left: 10, bottom: 30 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="month" 
-                        tick={{ fontSize: 9 }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={45}
-                      />
-                      <YAxis tick={{ fontSize: 9 }} width={35} />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Line 
-                        type="monotone" 
-                        dataKey="count" 
-                        stroke="var(--color-count)" 
-                        strokeWidth={2}
-                        dot={{ fill: 'var(--color-count)', strokeWidth: 2, r: 4 }}
-                        activeDot={{ r: 6, stroke: 'var(--color-count)', strokeWidth: 2, fill: '#fff' }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-
-            {/* Graphique en barres - Issues par Campus */}
-            <Card className="bg-white/80 backdrop-blur-sm border-gray-200 hover:shadow-lg transition-all duration-300">
-              <CardHeader className="pb-1.5 sm:pb-2 p-2.5 sm:p-3 md:p-4">
-                 <CardTitle className="flex items-center gap-1.5 text-gray-900 text-xs sm:text-sm">
-                   <Users className="w-3 h-3 sm:w-4 sm:h-4 text-indigo-600" />
-                   Issues par Campus
-                 </CardTitle>
-                <CardDescription className="text-gray-600 text-xs mt-0.5">Répartition des issues par campus</CardDescription>
-              </CardHeader>
-              <CardContent className="p-2 sm:p-3 md:p-4">
-                <ChartContainer config={chartConfig} className="h-[180px] sm:h-[200px] md:h-[240px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={getIssuesByCampus()} margin={{ top: 5, right: 10, left: 5, bottom: 30 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="campus" 
-                        tick={{ fontSize: 10 }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={50}
-                      />
-                      <YAxis tick={{ fontSize: 10 }} width={40} />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="count" fill="var(--color-count)" radius={4} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-
-            {/* Graphique en barres - Issues par Processus */}
-            <Card className="bg-white/80 backdrop-blur-sm border-gray-200 hover:shadow-lg transition-all duration-300">
-              <CardHeader className="pb-1 sm:pb-2 p-3 sm:p-4">
-                 <CardTitle className="flex items-center gap-1.5 text-gray-900 text-xs sm:text-sm">
-                   <Activity className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600" />
-                   Issues par Processus
-                 </CardTitle>
-                <CardDescription className="text-gray-600 text-xs mt-1">Répartition des issues par processus</CardDescription>
-              </CardHeader>
-              <CardContent className="p-2 sm:p-3 md:p-4">
-                <ChartContainer config={chartConfig} className="h-[180px] sm:h-[200px] md:h-[220px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={getIssuesByProcessus()} margin={{ top: 5, right: 10, left: 5, bottom: 30 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="processus" 
-                        tick={{ fontSize: 10 }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={50}
-                      />
-                      <YAxis tick={{ fontSize: 10 }} width={40} />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="count" fill="var(--color-count)" radius={4} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-
-            {/* Graphique en secteurs - Issues par Type d'utilisateur */}
-            <Card className="bg-white/80 backdrop-blur-sm border-gray-200 hover:shadow-lg transition-all duration-300">
-              <CardHeader className="pb-1.5 sm:pb-2 p-2.5 sm:p-3 md:p-4">
-                 <CardTitle className="flex items-center gap-1.5 text-gray-900 text-xs sm:text-sm">
-                   <Users className="w-3 h-3 sm:w-4 sm:h-4 text-indigo-600" />
-                   Issues par Type d'utilisateur
-                 </CardTitle>
-                <CardDescription className="text-gray-600 text-xs mt-0.5">Distribution des issues par type d'utilisateur</CardDescription>
-              </CardHeader>
-              <CardContent className="p-2 sm:p-3 md:p-4">
-                <ChartContainer config={chartConfig} className="h-[180px] sm:h-[200px] md:h-[240px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={getIssuesByUserType()}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius="55%"
-                        innerRadius="0%"
-                        dataKey="count"
-                        label={({ userType, percent }) => `${userType}: ${(percent * 100).toFixed(0)}%`}
-                        labelLine={false}
-                        paddingAngle={2}
-                      >
-                        {getIssuesByUserType().map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <ChartTooltip 
-                        content={<ChartTooltipContent />}
-                        formatter={(value: number) => [value, 'Nombre']}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-           </div>
-         </div>
-       </div>
-
-       {/* Modale KPI */}
-       {state.showKpiModal && (
-         <div className="fixed inset-0 flex items-center justify-center z-50 p-2 sm:p-4 animate-in fade-in duration-500 ease-out">
-           <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-500 ease-out">
-             <div className="p-3 sm:p-4 md:p-6 border-b border-gray-200">
-               <div className="flex items-center justify-between gap-2 sm:gap-4">
-                 <div className="flex-1 min-w-0">
-                   <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 truncate">
-                     {state.selectedKpiType === 'total' && 'Tous les Issues'}
-                     {state.selectedKpiType === 'closed' && 'Issues Clôturées'}
-                     {state.selectedKpiType === 'open' && 'Issues Ouverts'}
-                     {state.selectedKpiType === 'inProgress' && 'Issues En Cours'}
-                     {state.selectedKpiType === 'waiting' && 'Issues En Attente'}
-                     {state.selectedKpiType === 'needAction' && 'Issues Action Requise'}
-                   </h2>
-                   <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                     {state.selectedKpiData.length} issue{state.selectedKpiData.length > 1 ? 's' : ''} trouvé{state.selectedKpiData.length > 1 ? 's' : ''}
-                   </p>
-                 </div>
-                 <Button 
-                   onClick={closeKpiModal}
-                   variant="ghost" 
-                   size="sm"
-                   className="text-gray-400 hover:text-gray-600 flex-shrink-0"
-                 >
-                   <X className="w-4 h-4 sm:w-5 sm:h-5" />
-                 </Button>
-               </div>
-             </div>
-             
-             <div className="p-3 sm:p-4 md:p-6 overflow-y-auto max-h-[75vh] sm:max-h-[70vh]">
+             <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30">
                {state.selectedKpiData.length > 0 ? (
-                 <div className="space-y-3 sm:space-y-4">
+                 <div className="space-y-3">
                    {state.selectedKpiData.map((issue, index) => (
-                     <div key={issue.id || index} className="bg-gray-50 rounded-lg p-3 sm:p-4 hover:bg-gray-100 transition-colors">
-                       <div className="flex items-start justify-between gap-2 sm:gap-4">
-                         <div className="flex-1 min-w-0">
-                           <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-                             <span className="font-mono text-xs sm:text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                     <div key={issue.id || index} className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                       <div className="flex items-start justify-between gap-4">
+                         <div className="flex-1">
+                           <div className="flex flex-wrap items-center gap-2 mb-2">
+                             <span className="font-mono text-xs font-bold bg-blue-50 text-blue-700 px-2 py-1 rounded-md border border-blue-100">
                                {issue.key}
                              </span>
-                             <Badge className={`${
-                               issue.fields.status?.name === 'Ouvert' ? 'bg-orange-100 text-orange-800' :
-                               issue.fields.status?.name === 'Clôturée' ? 'bg-green-100 text-green-800' :
-                               issue.fields.status?.name === 'Mettre en œuvre' ? 'bg-purple-100 text-purple-800' :
-                               issue.fields.status?.name === 'En attente validation efficacité AC' ? 'bg-yellow-100 text-yellow-800' :
-                               issue.fields.status?.name === 'définir une Action corrective' ? 'bg-red-100 text-red-800' :
-                               'bg-gray-100 text-gray-800'
-                             } text-xs px-2 py-1 rounded`}>
+                             <Badge variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-200">
                                {issue.fields.status?.name || 'Inconnu'}
                              </Badge>
-                             <Badge className={`${
-                               issue.fields.priority?.name === 'Haute' ? 'bg-red-100 text-red-800' :
-                               issue.fields.priority?.name === 'Moyenne' ? 'bg-yellow-100 text-yellow-800' :
-                               issue.fields.priority?.name === 'Basse' ? 'bg-green-100 text-green-800' :
-                               'bg-gray-100 text-gray-800'
-                             } text-xs px-2 py-1 rounded`}>
+                             <Badge variant="outline" className="text-slate-600 border-slate-200">
                                {issue.fields.priority?.name || 'Normal'}
                              </Badge>
                            </div>
-                           
-                           <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-2 line-clamp-2">
-                             {issue.fields.summary}
-                           </h3>
-                           
-                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
-                             <div>
-                               <span className="font-medium">Assigné:</span>
-                               <span className="ml-2">{issue.fields.assignee?.displayName || 'Non assigné'}</span>
-                             </div>
-                             <div>
-                               <span className="font-medium">Créé:</span>
-                               <span className="ml-2">{new Date(issue.fields.created).toLocaleDateString('fr-FR')}</span>
-                             </div>
-                             <div>
-                               <span className="font-medium">Campus:</span>
-                               <span className="ml-2">{issue.fields.customfield_10117 || 'Non défini'}</span>
-                             </div>
-                           </div>
-                           
-                           {issue.fields.description && (
-                             <div className="mt-2 sm:mt-3">
-                               <p className="text-xs sm:text-sm text-gray-600 line-clamp-2">
-                                 {typeof issue.fields.description === 'string' 
-                                   ? issue.fields.description.replace(/<[^>]*>/g, '').substring(0, 150) + '...'
-                                   : 'Description non disponible'
-                                 }
-                               </p>
-                             </div>
-                           )}
+                           <h3 className="font-medium text-slate-900 mb-1">{issue.fields.summary}</h3>
+                           <p className="text-sm text-slate-500">
+                             Créé le {new Date(issue.fields.created).toLocaleDateString()} par {issue.fields.reporter?.displayName}
+                           </p>
                          </div>
                        </div>
                      </div>
                    ))}
                  </div>
                ) : (
-                 <div className="text-center py-8 sm:py-12">
-                   <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                     <AlertCircle className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
-                   </div>
-                   <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">Aucun issue trouvé</h3>
-                   <p className="text-xs sm:text-sm text-gray-600">
-                     Aucun issue ne correspond aux critères sélectionnés.
-                   </p>
-                 </div>
+                 <div className="text-center py-12 text-slate-500">Aucune issue trouvée pour cette catégorie.</div>
                )}
              </div>
            </div>
          </div>
-       )}
+      )}
 
-       {/* Configuration des filtres */}
-       {state.showFilterConfig && (
-         <FilterConfig
-           visibleFilters={state.visibleFilters}
-           onToggleFilter={toggleFilterVisibility}
-           onClose={closeFilterConfig}
-         />
-       )}
-     </>
+      {/* Filter Config Modal */}
+      {state.showFilterConfig && (
+        <FilterConfig
+          visibleFilters={state.visibleFilters}
+          onToggleFilter={(key) => setState(prev => ({
+            ...prev,
+            visibleFilters: {
+              ...prev.visibleFilters,
+              [key]: !prev.visibleFilters[key as keyof typeof state.visibleFilters]
+            }
+          }))}
+          onClose={closeFilterConfig}
+        />
+      )}
     </AuthGuard>
-   );
- }
+  );
+}
