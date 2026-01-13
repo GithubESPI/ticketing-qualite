@@ -136,7 +136,7 @@ export default function AnalyticsTable({ issues }: AnalyticsTableProps) {
                   <TableCell className="font-medium text-blue-600 font-mono text-xs">
                     {issue.key}
                   </TableCell>
-                  <TableCell className="max-w-[300px] truncate" title={issue.fields.summary}>
+                  <TableCell className="max-w-[300px] truncate text-slate-700 font-medium" title={issue.fields.summary}>
                     {issue.fields.summary}
                   </TableCell>
                   <TableCell>
