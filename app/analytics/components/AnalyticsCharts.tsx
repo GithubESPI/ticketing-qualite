@@ -1,16 +1,16 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  BarChart, 
-  Bar, 
-  LineChart, 
-  Line, 
-  PieChart, 
-  Pie, 
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
   Cell,
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
+  XAxis,
+  YAxis,
+  CartesianGrid,
   ResponsiveContainer
 } from 'recharts';
 import {
@@ -82,8 +82,8 @@ export default function AnalyticsCharts({
       >
         <BarChart data={dataByStatus} margin={{ top: 10, right: 10, left: 0, bottom: 30 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-          <XAxis 
-            dataKey="status" 
+          <XAxis
+            dataKey="status"
             tick={{ fontSize: 11, fill: '#64748b' }}
             axisLine={false}
             tickLine={false}
@@ -91,16 +91,16 @@ export default function AnalyticsCharts({
             textAnchor="end"
             height={60}
           />
-          <YAxis 
-            tick={{ fontSize: 11, fill: '#64748b' }} 
+          <YAxis
+            tick={{ fontSize: 11, fill: '#64748b' }}
             axisLine={false}
             tickLine={false}
-            width={30} 
+            width={30}
           />
           <ChartTooltip cursor={{ fill: '#f1f5f9' }} content={<ChartTooltipContent />} />
-          <Bar 
-            dataKey="count" 
-            fill="var(--color-count)" 
+          <Bar
+            dataKey="count"
+            fill="var(--color-count)"
             radius={[4, 4, 0, 0]}
             barSize={32}
           />
@@ -113,6 +113,7 @@ export default function AnalyticsCharts({
         description="Distribution des issues par niveau de priorité"
         icon={PieChartIcon}
         iconColor="text-emerald-600"
+        legend={<Legend data={dataByPriority} colorKey="priority" />}
       >
         <PieChart>
           <Pie
@@ -129,7 +130,6 @@ export default function AnalyticsCharts({
             ))}
           </Pie>
           <ChartTooltip content={<ChartTooltipContent />} />
-          <Legend data={dataByPriority} colorKey="priority" />
         </PieChart>
       </ChartCard>
 
@@ -139,6 +139,7 @@ export default function AnalyticsCharts({
         description="Distribution des issues par processus"
         icon={Activity}
         iconColor="text-violet-600"
+        legend={<Legend data={dataByProcessus} colorKey="processus" />}
       >
         <PieChart>
           <Pie
@@ -155,7 +156,6 @@ export default function AnalyticsCharts({
             ))}
           </Pie>
           <ChartTooltip content={<ChartTooltipContent />} />
-          <Legend data={dataByProcessus} colorKey="processus" />
         </PieChart>
       </ChartCard>
 
@@ -168,8 +168,8 @@ export default function AnalyticsCharts({
       >
         <LineChart data={dataByMonth} margin={{ top: 10, right: 10, left: 0, bottom: 30 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-          <XAxis 
-            dataKey="month" 
+          <XAxis
+            dataKey="month"
             tick={{ fontSize: 11, fill: '#64748b' }}
             axisLine={false}
             tickLine={false}
@@ -177,17 +177,17 @@ export default function AnalyticsCharts({
             textAnchor="end"
             height={60}
           />
-          <YAxis 
-            tick={{ fontSize: 11, fill: '#64748b' }} 
+          <YAxis
+            tick={{ fontSize: 11, fill: '#64748b' }}
             axisLine={false}
             tickLine={false}
-            width={30} 
+            width={30}
           />
           <ChartTooltip content={<ChartTooltipContent />} />
-          <Line 
-            type="monotone" 
-            dataKey="count" 
-            stroke="#3b82f6" 
+          <Line
+            type="monotone"
+            dataKey="count"
+            stroke="#3b82f6"
             strokeWidth={3}
             dot={{ fill: 'white', stroke: '#3b82f6', strokeWidth: 2, r: 4 }}
             activeDot={{ r: 6, strokeWidth: 0, fill: '#2563eb' }}
@@ -204,8 +204,8 @@ export default function AnalyticsCharts({
       >
         <BarChart data={dataByCampus} margin={{ top: 10, right: 10, left: 0, bottom: 30 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-          <XAxis 
-            dataKey="campus" 
+          <XAxis
+            dataKey="campus"
             tick={{ fontSize: 11, fill: '#64748b' }}
             axisLine={false}
             tickLine={false}
@@ -213,16 +213,16 @@ export default function AnalyticsCharts({
             textAnchor="end"
             height={60}
           />
-          <YAxis 
-            tick={{ fontSize: 11, fill: '#64748b' }} 
+          <YAxis
+            tick={{ fontSize: 11, fill: '#64748b' }}
             axisLine={false}
             tickLine={false}
-            width={30} 
+            width={30}
           />
           <ChartTooltip cursor={{ fill: '#f1f5f9' }} content={<ChartTooltipContent />} />
-          <Bar 
-            dataKey="count" 
-            fill="#6366f1" 
+          <Bar
+            dataKey="count"
+            fill="#6366f1"
             radius={[4, 4, 0, 0]}
             barSize={32}
           />
@@ -235,6 +235,7 @@ export default function AnalyticsCharts({
         description="Distribution des issues par type d'utilisateur"
         icon={Users}
         iconColor="text-rose-600"
+        legend={<Legend data={dataByUserType} colorKey="userType" />}
       >
         <PieChart>
           <Pie
@@ -251,23 +252,22 @@ export default function AnalyticsCharts({
             ))}
           </Pie>
           <ChartTooltip content={<ChartTooltipContent />} />
-          <Legend data={dataByUserType} colorKey="userType" />
         </PieChart>
       </ChartCard>
     </div>
   );
 }
 
-function ChartCard({ title, description, icon: Icon, iconColor, children }: any) {
+function ChartCard({ title, description, icon: Icon, iconColor, children, legend }: any) {
   return (
     <Card className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
       <CardHeader className="pb-2 border-b border-slate-50 bg-slate-50/50">
-         <CardTitle className="flex items-center gap-2 text-slate-800 text-base">
-           <div className={`p-1.5 rounded-md bg-white shadow-sm ${iconColor}`}>
-             <Icon className="w-4 h-4" />
-           </div>
-           {title}
-         </CardTitle>
+        <CardTitle className="flex items-center gap-2 text-slate-800 text-base">
+          <div className={`p-1.5 rounded-md bg-white shadow-sm ${iconColor}`}>
+            <Icon className="w-4 h-4" />
+          </div>
+          {title}
+        </CardTitle>
         <CardDescription className="text-slate-500 text-xs">{description}</CardDescription>
       </CardHeader>
       <CardContent className="p-4 pt-6">
@@ -276,6 +276,7 @@ function ChartCard({ title, description, icon: Icon, iconColor, children }: any)
             {children}
           </ResponsiveContainer>
         </ChartContainer>
+        {legend && <div className="mt-4">{legend}</div>}
       </CardContent>
     </Card>
   );
@@ -284,16 +285,16 @@ function ChartCard({ title, description, icon: Icon, iconColor, children }: any)
 // Custom Legend for Pie Charts
 function Legend({ data, colorKey }: any) {
   if (!data || data.length === 0) return null;
-  
+
   // Take top 4 items to avoid clutter
   const items = data.slice(0, 4);
-  
+
   return (
-    <div className="flex flex-wrap justify-center gap-3 mt-4 text-xs text-slate-600">
+    <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-center gap-3 mt-4 text-xs text-slate-600 w-full">
       {items.map((item: any, index: number) => (
         <div key={index} className="flex items-center gap-1.5">
-          <div 
-            className="w-2.5 h-2.5 rounded-full" 
+          <div
+            className="w-2.5 h-2.5 rounded-full"
             style={{ backgroundColor: COLORS[index % COLORS.length] }}
           />
           <span>{item[colorKey]} ({item.count})</span>
