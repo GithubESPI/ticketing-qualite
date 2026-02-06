@@ -107,7 +107,7 @@ export default function AnalyticsCharts({
         </BarChart>
       </ChartCard>
 
-      {/* Graphique en secteurs - Issues par priorité */}
+      {/* Graphique en secteurs-Issues par priorité */}
       <ChartCard
         title="Issues par Priorité"
         description="Distribution des issues par niveau de priorité"
