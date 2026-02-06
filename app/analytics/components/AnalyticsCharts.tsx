@@ -229,7 +229,7 @@ export default function AnalyticsCharts({
         </BarChart>
       </ChartCard>
 
-      {/* Graphique en secteurs - Issues par Type d'utilisateur */}
+      {/* Graphique en secteurs -Issues par Type d'utilisateur */}
       <ChartCard
         title="Issues par Type d'utilisateur"
         description="Distribution des issues par type d'utilisateur"
